@@ -1,0 +1,456 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Jscore</title><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#2b4a8b"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#eef0f3;--panel:#f7f8fa;--card:#fff;--ink:#1c2433;--mute:#667085;--line:#d5d9e0;--accent:#2b4a8b;--accent-ink:#fff;--mark:#c8372d;--hl:#ffe45c;--shadow:0 1px 2px rgba(20,30,50,.08),0 4px 14px rgba(20,30,50,.06)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161d;--panel:#171c25;--card:#1e2430;--ink:#e8ebf1;--mute:#98a2b3;--line:#2c3443;--accent:#7ea2f0;--accent-ink:#0d1320;--mark:#ff6b5e;--shadow:0 1px 2px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--bg:#12161d;--panel:#171c25;--card:#1e2430;--ink:#e8ebf1;--mute:#98a2b3;--line:#2c3443;--accent:#7ea2f0;--accent-ink:#0d1320;--mark:#ff6b5e;--shadow:0 1px 2px rgba(0,0,0,.4)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 "IBM Plex Sans",system-ui,sans-serif;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+h1,h2,h3{font-family:"Instrument Serif",Georgia,serif;font-weight:400;margin:0}
+.app{display:grid;grid-template-columns:272px 1fr;gap:16px;height:100vh;height:100dvh;padding:12px 0}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.brand{font-family:"Instrument Serif",serif;font-size:26px;padding:4px 6px;display:flex;align-items:center;gap:8px}
+.brand i{width:10px;height:10px;border-radius:50%;background:var(--mark);display:inline-block}
+.tree .row{display:flex;align-items:center;gap:4px;padding:6px 8px;border-radius:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tree .row:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.tree .row.on{background:color-mix(in srgb,var(--accent) 18%,transparent);font-weight:500}
+.tree .row.drop{outline:2px dashed var(--accent)}
+.tw{width:16px;color:var(--mute);font-size:11px;text-align:center;flex:none}
+main{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:auto;display:flex;flex-direction:column;min-width:0}
+.top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:5}
+.crumbs{display:flex;gap:4px;align-items:center;flex-wrap:wrap;flex:1;min-width:140px;font-family:"Instrument Serif",serif;font-size:22px}
+.crumbs a{cursor:pointer;color:var(--mute)}.crumbs a:last-child{color:var(--ink)}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:7px 12px;font-size:14px;display:inline-flex;gap:6px;align-items:center}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.on{background:var(--accent);color:var(--accent-ink)}
+.btn.dng{color:var(--mark)}
+.btn:disabled{opacity:.45;cursor:default}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;position:relative;cursor:pointer;display:flex;flex-direction:column}
+.card:hover{border-color:var(--accent)}
+.card.drop{outline:2px dashed var(--accent)}
+.thumb{height:120px;background:repeating-linear-gradient(0deg,transparent 0 11px,color-mix(in srgb,var(--ink) 9%,transparent) 11px 12px),var(--bg);display:flex;align-items:center;justify-content:center;font-size:38px;color:var(--mute);overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.cn{padding:8px 10px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cs{padding:0 10px 8px;font:12px "IBM Plex Mono",monospace;color:var(--mute)}
+.dots{position:absolute;top:6px;right:6px;background:color-mix(in srgb,var(--card) 88%,transparent);border:1px solid var(--line);border-radius:8px;padding:2px 8px}
+.empty{padding:48px 16px;text-align:center;color:var(--mute)}
+.empty h2{font-size:28px;color:var(--ink);margin-bottom:6px}
+.mask{position:fixed;inset:0;background:rgba(10,14,22,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.dlg{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;width:min(440px,100%);max-height:86vh;overflow:auto;box-shadow:var(--shadow)}
+.dlg h3{font-size:24px;margin-bottom:10px}
+.dlg input[type=text],.dlg textarea,.fld{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit}
+.acts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:10px 8px;border-radius:8px}
+.menu button:hover{background:var(--bg)}
+.pick{border:1px solid var(--line);border-radius:10px;max-height:260px;overflow:auto;padding:4px}
+.pick .row{padding:7px 8px;border-radius:7px;cursor:pointer}
+.pick .row.on{background:color-mix(in srgb,var(--accent) 20%,transparent)}
+.tabs{display:flex;gap:4px;padding:8px 16px 0}
+.tab{border:1px solid var(--line);border-bottom:0;border-radius:9px 9px 0 0;background:var(--bg);padding:7px 14px}
+.tab.on{background:var(--card);font-weight:600}
+.pane{padding:12px 16px 24px}
+#main.focus .top,#main.focus .tabs{display:none}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px}.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.srch{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit}
+#main.focus .pane{padding:8px 8px 12px}
+.fab{position:fixed;top:10px;right:14px;z-index:30;display:flex;gap:4px;align-items:center;background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:12px;padding:4px 6px;box-shadow:var(--shadow)}
+.fab .btn{padding:5px 10px}
+.tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.sw{width:24px;height:24px;border-radius:50%;border:2px solid var(--card);outline:1px solid var(--line);padding:0}
+.sw.on{outline:2px solid var(--accent)}
+.page{position:relative;display:inline-block;max-width:100%;background:#fff;box-shadow:var(--shadow);touch-action:pan-y pinch-zoom}
+.page.draw{touch-action:none}
+.page img,.page canvas.base{display:block;max-width:100%;height:auto}
+.page canvas.ov{position:absolute;inset:0;width:100%;height:100%}
+.pgs{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.mono{font-family:"IBM Plex Mono",monospace;font-size:13px}
+.mute{color:var(--mute)}
+#abcbox{width:100%;min-height:150px;font-family:"IBM Plex Mono",monospace;font-size:13px}
+#paper{background:#fff;border-radius:10px;padding:8px;overflow:auto;color:#111}
+canvas.roll{width:100%;height:150px;background:var(--bg);border:1px solid var(--line);border-radius:10px;display:block}
+.player{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.msg{padding:8px 12px;border-radius:9px;background:color-mix(in srgb,var(--accent) 12%,transparent);margin:8px 0;font-size:14px}
+.msg.err{background:color-mix(in srgb,var(--mark) 14%,transparent)}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;z-index:99;display:none}
+.mb{display:none}
+.app.nosb{grid-template-columns:1fr}.app.nosb aside{display:none}.app.nosb .mb{display:inline-flex}
+@media (max-width:760px){
+ .app{grid-template-columns:1fr}
+ aside{position:fixed;left:0;top:0;bottom:0;width:min(300px,86vw);z-index:40;transform:translateX(-105%);transition:transform .2s;border-radius:0 14px 14px 0}
+ aside.open{transform:none}
+ .mb{display:inline-flex}
+}
+</style>
+</head><body>
+<div class="app">
+ <aside id="side">
+  <div class="brand" id="brand" role="button" title="Voltar ao início" style="cursor:pointer"><i></i>Jscore</div>
+  <button class="btn" id="bHideSide" title="Ocultar este painel">◀ Ocultar</button>
+  <input type="search" id="q" class="srch" placeholder="🔎 Buscar por nome ou número" autocomplete="off">
+  <button class="btn pri" id="sNewFolder">＋ Nova pasta</button>
+  <div class="tree" id="tree"></div>
+  <div style="margin-top:auto;display:flex;gap:6px;flex-wrap:wrap">
+   <button class="btn" id="bBackup">⬇ Backup</button>
+   <button class="btn" id="bRestore">⬆ Restaurar</button>
+  </div>
+ </aside>
+ <main id="main"></main>
+</div>
+<div id="modal"></div>
+<div id="toast"></div>
+<input type="file" id="fImport" accept=".pdf,.png,.jpg,.jpeg,.webp,.xml,.musicxml,.mid,.midi,.abc,.txt,image/*,application/pdf" multiple hidden>
+<input type="file" id="fCam" accept="image/*" capture="environment" hidden>
+<input type="file" id="fAdd" accept="image/*,application/pdf" capture="environment" hidden>
+<input type="file" id="fRestore" accept=".json,application/json" hidden>
+<script>
+/* ===== util + storage ===== */
+const $=(s,r=document)=>r.querySelector(s);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2800)}
+let idb=null,mem=new Map(),memMode=false;
+function openDB(){return new Promise(res=>{try{const r=indexedDB.open('repertorio',1);r.onupgradeneeded=()=>r.result.createObjectStore('nodes',{keyPath:'id'});r.onsuccess=()=>{idb=r.result;res(true)};r.onerror=()=>res(false)}catch(e){res(false)}})}
+function dbAll(){return new Promise(res=>{if(!idb)return res([...mem.values()]);const q=idb.transaction('nodes').objectStore('nodes').getAll();q.onsuccess=()=>res(q.result);q.onerror=()=>res([])})}
+function dbPut(n){n.updated=Date.now();if(!idb){mem.set(n.id,n);return Promise.resolve()}return new Promise(res=>{try{const t=idb.transaction('nodes','readwrite');t.objectStore('nodes').put(n);t.oncomplete=()=>res();t.onerror=()=>{toast('Falha ao salvar (armazenamento cheio?)');res()}}catch(e){toast('Falha ao salvar');res()}})}
+function dbDel(id){if(!idb){mem.delete(id);return Promise.resolve()}return new Promise(res=>{const t=idb.transaction('nodes','readwrite');t.objectStore('nodes').delete(id);t.oncomplete=()=>res()})}
+let NODES=[];
+async function reload(){NODES=await dbAll();NODES.sort((a,b)=>(a.name||'').localeCompare(b.name||'','pt',{numeric:true}))}
+const kids=pid=>NODES.filter(n=>n.parentId===pid);
+const byId=id=>NODES.find(n=>n.id===id);
+function isDesc(id,anc){let c=byId(id);while(c){if(c.id===anc)return true;c=byId(c.parentId)}return false}
+function path(id){const a=[];let c=byId(id);while(c){a.unshift(c);c=byId(c.parentId)}return a}
+const ROOT=null;
+let cur=ROOT,openIds=new Set(),viewing=null;
+
+/* ===== modal helpers (sem alert/prompt) ===== */
+function modal(html,setup){const m=$('#modal');m.innerHTML='<div class="mask"><div class="dlg">'+html+'</div></div>';const mk=m.firstChild;mk.addEventListener('mousedown',e=>{if(e.target===mk)closeModal()});if(setup)setup(m.firstChild.firstChild);return m}
+function closeModal(){$('#modal').innerHTML=''}
+function ask(title,val,okLabel){return new Promise(res=>{modal(`<h3>${esc(title)}</h3><input type="text" id="mi" value="${esc(val||'')}"><div class="acts"><button class="btn" id="mc">Cancelar</button><button class="btn pri" id="mo">${okLabel||'OK'}</button></div>`,d=>{const i=$('#mi',d);i.focus();i.select();const ok=()=>{const v=i.value.trim();closeModal();res(v||null)};$('#mo',d).onclick=ok;$('#mc',d).onclick=()=>{closeModal();res(null)};i.onkeydown=e=>{if(e.key==='Enter')ok();if(e.key==='Escape'){closeModal();res(null)}}})})}
+function confirmBox(title,text,label){return new Promise(res=>{modal(`<h3>${esc(title)}</h3><p>${esc(text)}</p><div class="acts"><button class="btn" id="mc">Cancelar</button><button class="btn pri" id="mo">${label||'Confirmar'}</button></div>`,d=>{$('#mo',d).onclick=()=>{closeModal();res(true)};$('#mc',d).onclick=()=>{closeModal();res(false)}})})}
+function pickFolder(title,exclude,label){return new Promise(res=>{let sel=ROOT;modal(`<h3>${esc(title)}</h3><div class="pick" id="pk"></div><div class="acts"><button class="btn" id="mc">Cancelar</button><button class="btn pri" id="mo">${label||'Escolher'}</button></div>`,d=>{const pk=$('#pk',d);const draw=()=>{let h=`<div class="row ${sel===ROOT?'on':''}" data-id="">📁 Início (raiz)</div>`;const walk=(pid,dep)=>kids(pid).filter(n=>n.type==='folder'&&!(exclude&&(n.id===exclude||isDesc(n.id,exclude)))).forEach(n=>{h+=`<div class="row ${sel===n.id?'on':''}" data-id="${n.id}" style="padding-left:${8+dep*16}px">📁 ${esc(n.name)}</div>`;walk(n.id,dep+1)});walk(ROOT,1);pk.innerHTML=h;pk.querySelectorAll('.row').forEach(r=>r.onclick=()=>{sel=r.dataset.id||ROOT;draw()})};draw();$('#mo',d).onclick=()=>{closeModal();res({id:sel})};$('#mc',d).onclick=()=>{closeModal();res(null)}})})}
+function menu(items){return new Promise(res=>{modal('<div class="menu">'+items.map((t,i)=>`<button data-i="${i}">${esc(t)}</button>`).join('')+'</div>',d=>{d.querySelectorAll('button').forEach(b=>b.onclick=()=>{closeModal();res(+b.dataset.i)})})})}
+
+/* ===== operações sobre nós ===== */
+async function mkFolder(pid){const n=await ask('Nova pasta','', 'Criar');if(!n)return;const f={id:uid(),type:'folder',parentId:pid,name:n,created:Date.now()};await dbPut(f);if(pid)openIds.add(pid);await reload();render()}
+async function renameNode(n){const v=await ask('Renomear',n.name,'Salvar');if(!v)return;n.name=v;await dbPut(n);await reload();render()}
+async function delNode(n){const sub=n.type==='folder'?NODES.filter(x=>isDesc(x.id,n.id)&&x.id!==n.id).length:0;if(!await confirmBox('Excluir "'+n.name+'"?',sub?`Isto também exclui ${sub} item(ns) dentro dela. Não há como desfazer.`:'Não há como desfazer.','Excluir'))return;const ids=NODES.filter(x=>isDesc(x.id,n.id)).map(x=>x.id);for(const i of ids)await dbDel(i);{const c=byId('culto');if(c){c.items=c.items.filter(x=>!ids.includes(x));await dbPut(c)}}if(cur&&ids.includes(cur))cur=n.parentId;await reload();render()}
+async function moveNode(n,pid){if(n.id===pid||n.parentId===pid)return;if(pid&&isDesc(pid,n.id)){toast('Não dá para mover uma pasta para dentro dela mesma');return}n.parentId=pid;await dbPut(n);await reload();render();toast('Movido')}
+async function copyDeep(n,pid,suffix){const c=structuredClone(n);c.id=uid();c.parentId=pid;c.created=Date.now();if(suffix)c.name=n.name+suffix;await dbPut(c);if(n.type==='folder'){for(const k of kids(n.id))await copyDeep(k,c.id,'')}return c}
+/* ===== voltar ao início ===== */
+function flushView(){clearTimeout(saveT);if(S)dbPut(S.n);unwake();S=null}
+function fsToggle(){const d=document,el=d.documentElement;try{if(d.fullscreenElement||d.webkitFullscreenElement){(d.exitFullscreen||d.webkitExitFullscreen).call(d)}else{const f=el.requestFullscreen||el.webkitRequestFullscreen;if(!f)throw 0;const r=f.call(el);if(r&&r.catch)r.catch(()=>toast('Tela cheia não permitida aqui. Instale o app pelo menu do Chrome (Instalar app) para abrir sem barras.'))}}catch(e){toast('Tela cheia não permitida aqui. Instale o app pelo menu do Chrome (Instalar app) para abrir sem barras.')}}
+const WIDE=()=>window.matchMedia('(min-width:761px)').matches;
+function sideClose(){$('#side').classList.remove('open')}
+function sideHide(){sideClose();if(WIDE())$('.app').classList.add('nosb')}
+function sideToggle(){if(WIDE())$('.app').classList.toggle('nosb');else $('#side').classList.toggle('open')}
+async function goHome(){if(viewing){stopPlay();flushView()}Q='';$('#q').value='';cur=ROOT;viewing=null;sideClose();await reload();render()}
+$('#brand').onclick=goHome;
+$('#main').addEventListener('click',()=>{sideClose()},true);
+$('#bHideSide').onclick=sideHide;
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#q').blur();sideClose()}});
+/* ===== busca ===== */
+let Q='';
+const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function whereIs(n){return path(n.parentId).map(x=>x.name).join(' / ')||'Início'}
+function renderSearch(){const m=$('#main');const q=norm(Q);const res=NODES.filter(n=>(n.type==='score'||n.type==='folder')&&norm(n.name).includes(q)).sort((a,b)=>(a.type===b.type?0:a.type==='folder'?-1:1));
+ m.innerHTML=`<div class="top"><button class="btn mb" id="bMenu">☰</button><div class="crumbs"><a>🔎 “${esc(Q)}”</a></div><span class="mono mute">${res.length} resultado(s)</span><button class="btn" id="sClr">✕ Limpar busca</button></div>`+
+ (res.length?`<div class="pane">${res.map(n=>`<div class="card" style="flex-direction:row;align-items:center;gap:10px;padding:10px;margin-bottom:8px" data-id="${n.id}"><span style="font-size:22px">${n.type==='folder'?'📁':'🎼'}</span><div style="flex:1;min-width:0"><div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.name)}</div><div class="cs" style="padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(whereIs(n))}</div></div>${n.type==='score'?`<button class="btn ${inCulto(n.id)?'on':''}" data-cul="${n.id}">🎷</button>`:''}</div>`).join('')}</div>`:`<div class="empty"><h2>Nada encontrado</h2><p>Tente outra parte do nome ou só o número.</p></div>`);
+ const bm=$('#bMenu');if(bm)bm.onclick=()=>sideToggle();
+ $('#sClr').onclick=()=>{Q='';$('#q').value='';render()};
+ m.querySelectorAll('.card').forEach(c=>c.onclick=e=>{if(e.target.closest('button'))return;const n=byId(c.dataset.id);if(n.type==='folder'){Q='';$('#q').value='';cur=n.id;openIds.add(n.id);render()}else openScore(n.id)});
+ m.querySelectorAll('[data-cul]').forEach(b=>b.onclick=async e=>{e.stopPropagation();await toggleCulto(b.dataset.cul)})}
+$('#q').oninput=e=>{Q=e.target.value.trim();if(viewing){closeScore();return}render()};
+/* ===== tela acesa ===== */
+let WL=null,WAKE=true,WLmsg=false;
+async function wake(){if(!WAKE||WL)return;try{if(!('wakeLock' in navigator))throw 0;WL=await navigator.wakeLock.request('screen');WL.addEventListener('release',()=>{WL=null})}catch(e){WL=null;if(!WLmsg){WLmsg=true;toast('Este navegador não deixou manter a tela acesa. Ajuste o “tempo de tela” do tablet.')}}}
+function unwake(){try{if(WL)WL.release()}catch(e){}WL=null}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&viewing)wake()});
+/* ===== atalhos de anotação ===== */
+const PRE=['2x','3x','Repetir','Rit.','Fermata','Cresc.','Dim.','Respirar','Solo','Tutti','D.C.','D.S.','Coda','Fim'];
+/* ===== lista do Culto ===== */
+const inCulto=id=>{const c=byId('culto');return !!c&&c.items.includes(id)};
+async function getCulto(){let c=byId('culto');if(!c){c={id:'culto',type:'culto',name:'Culto',items:[],created:Date.now()};await dbPut(c);await reload();c=byId('culto')}return c}
+async function toggleCulto(id){const c=await getCulto();c.items=c.items.filter(byId);const k=c.items.indexOf(id);if(k>=0){c.items.splice(k,1);toast('Tirada do Culto')}else{c.items.push(id);toast('Adicionada ao Culto ('+c.items.length+')')}await dbPut(c);await reload();render()}
+const cultoNb=n=>{const c=byId('culto');const ci=c?c.items.filter(byId):[];return {ci,ix:ci.indexOf(n.id)}};
+let KEEPHIDE=false;
+function goPiece(id){clearTimeout(saveT);dbPut(S.n);KEEPHIDE=!!S.hide;openScore(id);KEEPHIDE=false}
+function renderCulto(){const m=$('#main');const c=byId('culto');if(c)c.items=c.items.filter(byId);const items=c?c.items.map(byId):[];
+ m.innerHTML=`<div class="top"><button class="btn mb" id="bMenu">☰</button><div class="crumbs"><a data-id="">Início</a><span class="mute">/</span><a>🎷 Culto</a></div><button class="btn pri" id="cGo" ${items.length?'':'disabled'}>▶ Começar</button><button class="btn dng" id="cClr" ${items.length?'':'disabled'}>Limpar lista</button></div>`+
+ (items.length?`<div class="pane">${items.map((n,i)=>`<div class="card" style="flex-direction:row;align-items:center;gap:8px;padding:10px;margin-bottom:8px" data-id="${n.id}"><span class="grip" title="Arraste para reordenar" style="touch-action:none;cursor:grab;font-size:22px;padding:6px 10px;color:var(--mute);user-select:none">⠿</span><span class="mono" style="width:22px;text-align:center">${i+1}</span><div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">${esc(n.name)}</div><button class="btn" data-up="${n.id}">↑</button><button class="btn" data-dn="${n.id}">↓</button><button class="btn dng" data-rm="${n.id}">✕</button></div>`).join('')}</div>`:`<div class="empty"><h2>Lista do culto vazia</h2><p>Abra uma partitura e toque em “＋ Culto”, ou use o ⋯ de qualquer peça e escolha “Adicionar ao Culto”.</p></div>`);
+ m.querySelectorAll('.crumbs a[data-id]').forEach(a=>a.onclick=()=>{cur=ROOT;render()});
+ const bm=$('#bMenu');if(bm)bm.onclick=()=>sideToggle();
+ const save=async()=>{await dbPut(c);await reload();render()};
+ m.querySelectorAll('.card').forEach(cd=>cd.onclick=e=>{if(e.target.closest('button')||e.target.closest('.grip'))return;openScore(cd.dataset.id)});
+ m.querySelectorAll('.grip').forEach(g=>{g.onpointerdown=e=>{e.preventDefault();const card=g.closest('.card'),wrap=card.parentNode;g.setPointerCapture(e.pointerId);card.style.opacity='.6';card.style.outline='2px dashed var(--accent)';
+  g.onpointermove=ev=>{const el=document.elementFromPoint(ev.clientX,ev.clientY);const over=el&&el.closest&&el.closest('.card');if(over&&over!==card&&over.parentNode===wrap){if(over.compareDocumentPosition(card)&Node.DOCUMENT_POSITION_FOLLOWING)wrap.insertBefore(over,card.nextSibling);else wrap.insertBefore(over,card)}};
+  const end=()=>{g.onpointermove=null;g.onpointerup=null;g.onpointercancel=null;card.style.opacity='';card.style.outline='';c.items=[...wrap.querySelectorAll('.card')].map(x=>x.dataset.id);save()};g.onpointerup=end;g.onpointercancel=end}});
+ m.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>{const k=c.items.indexOf(b.dataset.up);if(k>0){[c.items[k-1],c.items[k]]=[c.items[k],c.items[k-1]];save()}});
+ m.querySelectorAll('[data-dn]').forEach(b=>b.onclick=()=>{const k=c.items.indexOf(b.dataset.dn);if(k>=0&&k<c.items.length-1){[c.items[k+1],c.items[k]]=[c.items[k],c.items[k+1]];save()}});
+ m.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{c.items=c.items.filter(x=>x!==b.dataset.rm);save()});
+ const go=$('#cGo');if(go)go.onclick=()=>openScore(items[0].id);
+ const cl=$('#cClr');if(cl)cl.onclick=async()=>{if(await confirmBox('Limpar a lista do Culto?','As partituras continuam nas pastas; só a lista é esvaziada.','Limpar')){c.items=[];save()}}}
+async function nodeMenu(n){const isS=n.type==='score';const lab=['Renomear','Duplicar aqui','Copiar para…','Mover para…','Excluir'];if(isS)lab.unshift(inCulto(n.id)?'Tirar do Culto':'🎷 Adicionar ao Culto');let i=await menu(lab);if(i==null)return;if(isS){if(i===0){await toggleCulto(n.id);return}i--}
+ if(i===0)return renameNode(n);
+ if(i===1){await copyDeep(n,n.parentId,' (cópia)');await reload();render();return toast('Duplicado')}
+ if(i===2){const p=await pickFolder('Copiar "'+n.name+'" para…',n.type==='folder'?n.id:null,'Copiar aqui');if(!p)return;await copyDeep(n,p.id,'');await reload();render();return toast('Copiado')}
+ if(i===3){const p=await pickFolder('Mover "'+n.name+'" para…',n.type==='folder'?n.id:null,'Mover aqui');if(!p)return;return moveNode(n,p.id)}
+ if(i===4)return delNode(n)}
+
+/* ===== backup ===== */
+const b2s=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
+const s2b=async s=>await (await fetch(s)).blob();
+async function backup(){const dl=window.claude?await claude.use('downloads'):null;if(!dl&&window.claude)return toast('Download indisponível aqui');toast('Preparando backup…');
+ const out=[];for(const n of NODES){const c={...n};if(c.pages)c.pages=await Promise.all(c.pages.map(b2s));if(c.pdf)c.pdf=await b2s(c.pdf);out.push(c)}
+ const data=JSON.stringify({v:1,nodes:out});try{if(dl)await dl.save({filename:'jscore-backup.json',data});else{const bl=new Blob([data],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='jscore-backup.json';document.body.appendChild(a);a.click();a.remove()}toast('Backup salvo')}catch(e){toast('Backup cancelado')}}
+async function restore(file){try{const j=JSON.parse(await file.text());if(!j.nodes)throw 0;let n=0;for(const c of j.nodes){if(c.pages)c.pages=await Promise.all(c.pages.map(s2b));if(c.pdf)c.pdf=await s2b(c.pdf);await dbPut(c);n++}await reload();render();toast(n+' itens restaurados')}catch(e){toast('Arquivo de backup inválido')}}
+
+/* ===== bibliotecas sob demanda ===== */
+const _ld={};
+function loadLib(u){return _ld[u]||(_ld[u]=new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=()=>{delete _ld[u];rej(new Error('Não consegui carregar uma biblioteca (sem internet?)'))};document.head.appendChild(s)}))}
+async function needPdf(){if(!window.pdfjsLib)await loadLib('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';return pdfjsLib}
+let ABC=null;
+async function needAbc(){if(!ABC){await loadLib('https://cdnjs.cloudflare.com/ajax/libs/abcjs/6.4.4/abcjs-basic-min.js');ABC=window.ABCJS||window.abcjs}return ABC}
+/* ===== imagens ===== */
+function loadImg(blob){return new Promise((res,rej)=>{const u=URL.createObjectURL(blob);const i=new Image();i.onload=()=>res({i,u});i.onerror=rej;i.src=u})}
+function cvBlob(c,q){return new Promise(r=>c.toBlob(r,'image/jpeg',q||.88))}
+async function procImage(blob,{max=2200,rot=0,enh=false}={}){const {i,u}=await loadImg(blob);let w=i.naturalWidth,h=i.naturalHeight;const s=Math.min(1,max/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);const c=document.createElement('canvas');const sw=rot%180?h:w,sh=rot%180?w:h;c.width=sw;c.height=sh;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,sw,sh);x.translate(sw/2,sh/2);x.rotate(rot*Math.PI/180);if(enh)x.filter='grayscale(1) contrast(1.55) brightness(1.08)';x.drawImage(i,-w/2,-h/2,w,h);URL.revokeObjectURL(u);return cvBlob(c)}
+
+/* ===== importação ===== */
+const baseName=f=>f.name.replace(/\.[^.]+$/,'');
+async function importFiles(files,pid){let last=null;
+ for(const f of files){const ext=(f.name.split('.').pop()||'').toLowerCase();const n={id:uid(),type:'score',parentId:pid,name:baseName(f),created:Date.now(),notes:'',ann:{}};
+  try{
+   if(f.type.startsWith('image/')){n.kind='image';n.pages=[await procImage(f)]}
+   else if(ext==='pdf'){n.kind='pdf';n.pdf=f;const d=await (await needPdf()).getDocument({data:await f.arrayBuffer()}).promise;n.nPages=d.numPages}
+   else if(['xml','musicxml'].includes(ext)){n.kind='musicxml';n.xml=await f.text()}
+   else if(['mid','midi'].includes(ext)){n.kind='midi';n.midi=f}
+   else if(['abc','txt'].includes(ext)){n.kind='abc';n.abc=await f.text()}
+   else if(ext==='mxl'){toast('.mxl compactado não é suportado. Exporte como MusicXML (.xml) ou PDF.');continue}
+   else{toast('Formato não suportado: '+f.name);continue}
+   await dbPut(n);last=n}catch(e){console.error(e);toast('Falha ao importar '+f.name)}}
+ await reload();render();if(last&&files.length===1)openScore(last.id);else if(last)toast(files.length+' arquivos importados')}
+
+/* ===== sidebar / listagem ===== */
+function renderTree(){const t=$('#tree');let h=`<div class="row ${cur===ROOT&&!viewing?'on':''}" data-id="" data-drop="1"><span class="tw"></span>🏠 Início</div><div class="row ${cur==='__culto'&&!viewing?'on':''}" data-id="__culto"><span class="tw"></span>🎷 Culto (${(byId('culto')?byId('culto').items.filter(byId).length:0)})</div>`;
+ const walk=(pid,dep)=>kids(pid).filter(n=>n.type==='folder').forEach(n=>{const has=kids(n.id).some(k=>k.type==='folder');const op=openIds.has(n.id);h+=`<div class="row ${cur===n.id&&!viewing?'on':''}" data-id="${n.id}" data-drop="1" style="padding-left:${8+dep*14}px"><span class="tw" data-tw="${n.id}">${has?(op?'▾':'▸'):''}</span>📁 ${esc(n.name)}</div>`;if(op)walk(n.id,dep+1)});
+ walk(ROOT,0);t.innerHTML=h;
+ t.querySelectorAll('.row').forEach(r=>{r.onclick=e=>{const id=r.dataset.id||ROOT;if(e.target.dataset.tw){openIds.has(id)?openIds.delete(id):openIds.add(id);return renderTree()}if(viewing){stopPlay();flushView()}Q='';$('#q').value='';cur=id;viewing=null;if(id)openIds.add(id);render();sideClose()};if(r.dataset.id!=='__culto')dropTarget(r,r.dataset.id||ROOT)})}
+let dragId=null;
+function dropTarget(el,pid){el.ondragover=e=>{if(dragId){e.preventDefault();el.classList.add('drop')}};el.ondragleave=()=>el.classList.remove('drop');el.ondrop=e=>{e.preventDefault();el.classList.remove('drop');const n=byId(dragId);dragId=null;if(n)moveNode(n,pid)}}
+function render(){renderTree();if(viewing)return;const m=$('#main');m.classList.remove('focus');if(Q)return renderSearch();if(cur==='__culto')return renderCulto();const cs=path(cur);
+ let h=`<div class="top"><button class="btn mb" id="bMenu">☰</button><div class="crumbs"><a data-id="">Início</a>${cs.map(c=>`<span class="mute">/</span><a data-id="${c.id}">${esc(c.name)}</a>`).join('')}</div>
+ <button class="btn" id="bNF">📁 Nova pasta</button><button class="btn" id="bImp">⬆ Importar</button><button class="btn pri" id="bCam">📷 Foto da partitura</button></div>`;
+ const ch=kids(cur).sort((a,b)=>(a.type===b.type?0:a.type==='folder'?-1:1));
+ if(!ch.length)h+=`<div class="empty"><h2>${cur?'Pasta vazia':'Seu repertório começa aqui'}</h2><p>Tire uma foto de uma partitura, importe PDF, imagem, MusicXML, MIDI ou ABC, ou crie pastas e subpastas para organizar.</p></div>`;
+ else h+='<div class="grid">'+ch.map(n=>`<div class="card" draggable="true" data-id="${n.id}"><div class="thumb">${n.type==='folder'?'📁':({image:'',pdf:'📄',musicxml:'🎼',midi:'🎹',abc:'🎼'})[n.kind]===''?'<img alt="">':({pdf:'📄',musicxml:'🎼',midi:'🎹',abc:'🎼'})[n.kind]}</div><div class="cn">${esc(n.name)}</div><div class="cs">${n.type==='folder'?kids(n.id).length+' itens':n.kind}</div><button class="dots" data-m="${n.id}">⋯</button></div>`).join('')+'</div>';
+ m.innerHTML=h;
+ m.querySelectorAll('.crumbs a').forEach(a=>a.onclick=()=>{cur=a.dataset.id||ROOT;render()});
+ $('#bNF').onclick=()=>mkFolder(cur);$('#bImp').onclick=()=>$('#fImport').click();$('#bCam').onclick=()=>$('#fCam').click();const bm=$('#bMenu');if(bm)bm.onclick=()=>sideToggle();
+ m.querySelectorAll('.card').forEach(c=>{const n=byId(c.dataset.id);c.onclick=e=>{if(e.target.dataset.m)return;n.type==='folder'?(cur=n.id,openIds.add(n.id),render()):openScore(n.id)};c.ondragstart=()=>{dragId=n.id};if(n.type==='folder')dropTarget(c,n.id);
+  if(n.kind==='image'&&n.pages&&n.pages[0]){const im=$('img',c);if(im)im.src=URL.createObjectURL(n.pages[0])}});
+ m.querySelectorAll('.dots').forEach(b=>b.onclick=e=>{e.stopPropagation();nodeMenu(byId(b.dataset.m))})}
+$('#sNewFolder').onclick=()=>mkFolder(cur==='__culto'?ROOT:cur);
+$('#bBackup').onclick=backup;$('#bRestore').onclick=()=>$('#fRestore').click();
+$('#fRestore').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)restore(f)};
+$('#fImport').onchange=e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)importFiles(fs,cur)};
+$('#fCam').onchange=e=>{const fs=[...e.target.files];e.target.value='';if(fs.length)importFiles(fs,cur)};
+/* ===== visualizador + anotações ===== */
+let S=null,pdfDoc=null,saveT=null;
+const COLORS=['#c8372d','#1f4fd1','#1b8a4b','#111111','#e08a00'];
+const hasPages=n=>n.kind==='image'||n.kind==='pdf';
+const nPg=n=>n.kind==='pdf'?(n.nPages||1):(n.pages||[]).length;
+function saveSoon(){const n=S.n;clearTimeout(saveT);saveT=setTimeout(()=>dbPut(n),400)}
+async function openScore(id){sideHide();stopPlay&&stopPlay();viewing=id;pdfDoc=null;const n=byId(id);
+ S={n,tab:hasPages(n)?'part':'som',pg:0,tool:'read',color:COLORS[0],w:3,zoom:100,undo:[],hide:KEEPHIDE};wake();
+ if(n.kind==='pdf'){try{pdfDoc=await (await needPdf()).getDocument({data:await n.pdf.arrayBuffer()}).promise}catch(e){toast('Não consegui abrir o PDF')}}
+ renderViewer()}
+function closeScore(){stopPlay&&stopPlay();clearTimeout(saveT);dbPut(S.n);unwake();viewing=null;S=null;reload().then(render)}
+function renderViewer(){const n=S.n,m=$('#main');m.classList.remove('focus');
+ m.innerHTML=`<div class="top"><button class="btn mb" id="bMenu">☰</button><button class="btn" id="vHome" title="Início">🏠</button><button class="btn" id="vBack">← Voltar</button><div class="crumbs"><a id="vName" title="Renomear">${esc(n.name)}</a></div>${(()=>{const {ci,ix}=cultoNb(n);return `<button class="btn ${ix>=0?'on':''}" id="vCul">${ix>=0?'🎷 No Culto':'＋ Culto'}</button>`+(ix>=0&&ci.length>1?`<button class="btn" id="vPrev" ${ix>0?'':'disabled'}>⏮</button><button class="btn" id="vNext" ${ix<ci.length-1?'':'disabled'}>Próxima ⏭</button>`:'')})()}<button class="btn" id="vFs" title="Tela cheia">⛶</button><button class="btn" id="vMore">⋯</button></div>
+ <div class="tabs">${hasPages(n)?`<button class="tab ${S.tab==='part'?'on':''}" data-t="part">Partitura</button>`:''}<button class="tab ${S.tab==='som'?'on':''}" data-t="som">Som</button><button class="tab ${S.tab==='nt'?'on':''}" data-t="nt">Notas</button></div><div class="pane" id="pane"></div>`;
+ $('#bMenu').onclick=()=>sideToggle();
+ $('#vFs').onclick=fsToggle;$('#vBack').onclick=closeScore;$('#vHome').onclick=goHome;
+ $('#vCul').onclick=async()=>{await toggleCulto(n.id);renderViewer()};
+ {const {ci,ix}=cultoNb(n);const vn=$('#vNext'),vp=$('#vPrev');if(vn)vn.onclick=()=>goPiece(ci[ix+1]);if(vp)vp.onclick=()=>goPiece(ci[ix-1])}
+ $('#vName').onclick=async()=>{const v=await ask('Renomear',n.name,'Salvar');if(v){n.name=v;await dbPut(n);renderViewer()}};
+ $('#vMore').onclick=async()=>{await nodeMenu(n);if(!byId(n.id)){viewing=null;S=null;render()}else renderViewer()};
+ m.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{if(S.tab==='som')stopPlay();S.tab=t.dataset.t;renderViewer()});
+ if(S.tab==='part')renderPart();else if(S.tab==='som')renderSom($('#pane'));else renderNotes()}
+function renderNotes(){const p=$('#pane');p.innerHTML=`<p class="mute">Anotações livres sobre esta peça (andamento, dedilhado, tom, observações do ensaio…).</p><textarea class="fld" id="nt" rows="12">${esc(S.n.notes||'')}</textarea>`;$('#nt').oninput=e=>{S.n.notes=e.target.value;saveSoon()}}
+function renderPart(){const n=S.n,p=$('#pane'),N=nPg(n);$('#main').classList.toggle('focus',!!S.hide);
+ p.innerHTML=`${S.hide?`<div class="fab"><button class="btn" id="fP">◀</button><span class="mono">${S.pg+1}/${N||1}</span><button class="btn" id="fN">▶</button>${(()=>{const {ci,ix}=cultoNb(n);return (ix>0?'<button class="btn" id="fPrev">⏮ Anterior</button>':'')+(ix>=0&&ix<ci.length-1?'<button class="btn" id="fNext">Próxima peça ⏭</button>':'')})()}<button class="btn" id="fFs" title="Tela cheia">⛶</button><button class="btn pri" id="fShow">☰ Ferramentas</button></div>`:''}<div id="bars" ${S.hide?'hidden':''}><div class="pgs"><button class="btn" id="hideT">▴ Ocultar</button><button class="btn" id="pP">◀</button><span class="mono">página ${S.pg+1} / ${N||1}</span><button class="btn" id="pN">▶</button>
+ <button class="btn" id="zM">−</button><span class="mono">${S.zoom}%</span><button class="btn" id="zP">＋</button><button class="btn ${WAKE?'on':''}" id="wk">💡 Tela acesa</button>
+ ${n.kind==='image'?`<button class="btn" id="pRot">⟳ Girar</button><button class="btn" id="pEnh">✨ Realçar</button><button class="btn" id="pDel">🗑 Página</button><button class="btn" id="pAdd">＋ Página (foto)</button>`:''}</div>
+ <div class="tools">${[['read','👆 Ler'],['pen','✏️ Caneta'],['hl','🖍 Marca-texto'],['tx','🅣 Texto'],['er','🧽 Borracha']].map(([k,l])=>`<button class="btn ${S.tool===k?'on':''}" data-tool="${k}">${l}</button>`).join('')}
+ ${COLORS.map(c=>`<button class="sw ${S.color===c?'on':''}" data-c="${c}" style="background:${c}" aria-label="cor"></button>`).join('')}
+ <input type="range" id="tw" min="1" max="10" value="${S.w}" aria-label="espessura">
+ <button class="btn" id="aUndo">↶ Desfazer</button><button class="btn dng" id="aClr">Limpar página</button></div>${S.tool==='tx'?`<div class="tools" id="chips">${PRE.map(t=>`<button class="chip ${S.preset===t?'on':''}" data-pre="${esc(t)}">${esc(t)}</button>`).join('')}<button class="chip ${!S.preset?'on':''}" data-pre="">✎ Digitar…</button></div>`:''}</div>
+ <div id="pw" style="overflow:auto;max-height:${S.hide?'calc(100vh - 20px)':'calc(100vh - 260px)'};border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px"><div class="page ${S.tool!=='read'?'draw':''}" id="pg" style="width:${S.zoom}%;max-width:none"></div></div>`;
+ const goP=()=>{if(S.pg>0){S.pg--;S.undo=[];renderPart()}},goN=()=>{if(S.pg<N-1){S.pg++;S.undo=[];renderPart()}};
+ $('#pw').onclick=e=>{if(S.tool!=='read')return;const r=e.currentTarget.getBoundingClientRect();const x=(e.clientX-r.left)/r.width;const {ci,ix}=cultoNb(n);if(x<.18){if(S.pg>0)goP();else if(S.hide&&ix>0)goPiece(ci[ix-1])}else if(x>.82){if(S.pg<N-1)goN();else if(S.hide&&ix>=0&&ix<ci.length-1)goPiece(ci[ix+1])}};
+ if(S.hide){$('#fFs').onclick=fsToggle;$('#fP').onclick=goP;$('#fN').onclick=goN;$('#fShow').onclick=()=>{S.hide=false;renderPart()};{const {ci,ix}=cultoNb(n);const fnx=$('#fNext'),fpv=$('#fPrev');if(fnx)fnx.onclick=()=>goPiece(ci[ix+1]);if(fpv)fpv.onclick=()=>goPiece(ci[ix-1])};return mountPage()}
+ $('#hideT').onclick=()=>{S.hide=true;renderPart()};
+ $('#wk').onclick=()=>{WAKE=!WAKE;if(WAKE){WLmsg=false;wake();toast('Tela ficará acesa durante a leitura')}else{unwake();toast('Tela acesa desligada')}renderPart()};
+ p.querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{S.preset=b.dataset.pre||null;renderPart()});
+ $('#pP').onclick=goP;$('#pN').onclick=goN;
+ $('#zM').onclick=()=>{S.zoom=Math.max(50,S.zoom-25);renderPart()};$('#zP').onclick=()=>{S.zoom=Math.min(300,S.zoom+25);renderPart()};
+ p.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{S.tool=b.dataset.tool;renderPart()});
+ p.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{S.color=b.dataset.c;if(S.tool==='read'||S.tool==='er')S.tool='pen';renderPart()});
+ $('#tw').oninput=e=>S.w=+e.target.value;
+ $('#aUndo').onclick=()=>{if(!S.undo.length)return;S.n.ann[S.pg]=JSON.parse(S.undo.pop());saveSoon();drawAnn()};
+ $('#aClr').onclick=async()=>{if(!(S.n.ann[S.pg]||[]).length)return;if(await confirmBox('Limpar anotações desta página?','As marcações desta página serão apagadas.','Limpar')){pushUndo();S.n.ann[S.pg]=[];saveSoon();drawAnn()}};
+ if(n.kind==='image'){
+  $('#pRot').onclick=async()=>{n.pages[S.pg]=await procImage(n.pages[S.pg],{rot:90});n.ann[S.pg]=[];await dbPut(n);renderPart();toast('Anotações desta página foram limpas ao girar')};
+  $('#pEnh').onclick=async()=>{n.pages[S.pg]=await procImage(n.pages[S.pg],{enh:true});await dbPut(n);renderPart();toast('Contraste realçado')};
+  $('#pDel').onclick=async()=>{if(N<=1)return toast('Precisa ter ao menos uma página');if(!await confirmBox('Excluir esta página?','Não há como desfazer.','Excluir'))return;n.pages.splice(S.pg,1);const a={};Object.keys(n.ann).forEach(k=>{k=+k;if(k<S.pg)a[k]=n.ann[k];else if(k>S.pg)a[k-1]=n.ann[k]});n.ann=a;S.pg=Math.max(0,S.pg-1);await dbPut(n);renderPart()};
+  $('#pAdd').onclick=()=>$('#fAdd').click()}
+ mountPage()}
+$('#fAdd').onchange=async e=>{const fs=[...e.target.files];e.target.value='';if(!S||S.n.kind!=='image')return;for(const f of fs){if(f.type.startsWith('image/'))S.n.pages.push(await procImage(f))}await dbPut(S.n);S.pg=S.n.pages.length-1;renderPart()};
+async function mountPage(){const n=S.n,box=$('#pg');let base;
+ if(n.kind==='image'){base=document.createElement('img');base.style.cssText='display:block;width:100%;height:auto';base.src=URL.createObjectURL(n.pages[S.pg]);await new Promise(r=>base.onload=r)}
+ else{base=document.createElement('canvas');base.style.cssText='display:block;width:100%;height:auto';if(!pdfDoc){box.textContent='PDF indisponível';return}const pgd=await pdfDoc.getPage(S.pg+1);const vp0=pgd.getViewport({scale:1});const sc=Math.min(2.2,1500/vp0.width);const vp=pgd.getViewport({scale:sc});base.width=vp.width;base.height=vp.height;await pgd.render({canvasContext:base.getContext('2d'),viewport:vp}).promise}
+ box.innerHTML='';box.appendChild(base);const ov=document.createElement('canvas');ov.className='ov';ov.id='ov';const W=base.naturalWidth||base.width,H=base.naturalHeight||base.height;ov.width=Math.min(W,2000);ov.height=Math.round(ov.width*H/W);ov.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%';box.appendChild(ov);bindDraw(ov);drawAnn()}
+const annList=()=>S.n.ann[S.pg]||(S.n.ann[S.pg]=[]);
+function pushUndo(){S.undo.push(JSON.stringify(annList()));if(S.undo.length>40)S.undo.shift()}
+function drawAnn(){const ov=$('#ov');if(!ov)return;const c=ov.getContext('2d');c.clearRect(0,0,ov.width,ov.height);const W=ov.width,H=ov.height,u=W/1000;
+ c.lineCap='round';c.lineJoin='round';
+ for(const a of annList()){if(a.t==='tx'){c.fillStyle=a.c;c.font=`600 ${a.size*u}px "IBM Plex Sans",sans-serif`;c.textBaseline='top';a.s.split('\n').forEach((l,i)=>c.fillText(l,a.x*W,a.y*H+i*a.size*u*1.2))}
+  else if(a.p.length){c.strokeStyle=a.c;c.globalAlpha=a.t==='hl'?.35:1;c.lineWidth=a.w*u*(a.t==='hl'?4:1);c.beginPath();c.moveTo(a.p[0][0]*W,a.p[0][1]*H);if(a.p.length===1)c.lineTo(a.p[0][0]*W+.1,a.p[0][1]*H);for(const q of a.p)c.lineTo(q[0]*W,q[1]*H);c.stroke();c.globalAlpha=1}}}
+function bindDraw(ov){let cu=null,er=false;const pos=e=>{const r=ov.getBoundingClientRect();return [(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height]};
+ const erase=q=>{const L=annList();const th=0.02;const i=L.findIndex(a=>a.t==='tx'?(q[0]>=a.x-th&&q[0]<=a.x+(a.s.length*a.size*.006)+th&&q[1]>=a.y-th&&q[1]<=a.y+a.size*.0035*a.s.split('\n').length+th):segHit(a.p,q,ov.height/ov.width,th));if(i>=0){L.splice(i,1);drawAnn();return true}return false};
+ ov.onpointerdown=e=>{if(S.tool==='read')return;e.preventDefault();ov.setPointerCapture(e.pointerId);const q=pos(e);
+  if(S.tool==='tx'){(async()=>{const s=S.preset||await ask('Texto da anotação','','Inserir');if(!s)return;pushUndo();annList().push({t:'tx',c:S.color,x:q[0],y:q[1],s,size:S.w*4+14});saveSoon();drawAnn()})();return}
+  pushUndo();if(S.tool==='er'){er=true;if(erase(q))saveSoon();return}
+  cu={t:S.tool,c:S.color,w:S.w,p:[q]};annList().push(cu);drawAnn()};
+ ov.onpointermove=e=>{if(S.tool==='read')return;const q=pos(e);if(er){if(erase(q))saveSoon();return}if(!cu)return;cu.p.push(q);drawAnn()};
+ const end=()=>{if(cu||er){saveSoon()}cu=null;er=false};ov.onpointerup=end;ov.onpointercancel=end}
+
+function segHit(p,q,k,th){const X=(a)=>a[0],Y=(a)=>a[1]*k,qx=q[0],qy=q[1]*k;for(let i=0;i<p.length;i++){const ax=X(p[i]),ay=Y(p[i]),bx=i+1<p.length?X(p[i+1]):ax,by=i+1<p.length?Y(p[i+1]):ay;const dx=bx-ax,dy=by-ay,l=dx*dx+dy*dy;let t=l?((qx-ax)*dx+(qy-ay)*dy)/l:0;t=Math.max(0,Math.min(1,t));if(Math.hypot(ax+t*dx-qx,ay+t*dy-qy)<th)return true}return false}
+/* ===== parsers → eventos {t,d,m,v} (segundos @1x) ===== */
+function parseMidi(buf){const u=buf instanceof Uint8Array?buf:new Uint8Array(buf);const d=new DataView(u.buffer,u.byteOffset,u.byteLength);let p=0;
+ const str=n=>{let s='';for(let i=0;i<n;i++)s+=String.fromCharCode(d.getUint8(p++));return s};
+ if(str(4)!=='MThd')throw new Error('MIDI inválido');const hl=d.getUint32(p);p+=4;p+=2;const nt=d.getUint16(p);p+=2;let div=d.getUint16(p);p=14+(hl-6);if(div&0x8000)div=480;
+ const notes=[],tempos=[{tick:0,us:500000}];
+ for(let t=0;t<nt&&p<d.byteLength;t++){if(str(4)!=='MTrk')break;const len=d.getUint32(p);p+=4;const end=p+len;let tick=0,rs=0;const on={};
+  const vl=()=>{let v=0,b;do{b=d.getUint8(p++);v=(v<<7)|(b&127)}while(b&128);return v};
+  while(p<end){tick+=vl();let s=d.getUint8(p);if(s<128)s=rs;else p++;
+   if(s===0xFF){const ty=d.getUint8(p++);const l=vl();if(ty===0x51&&l===3)tempos.push({tick,us:(d.getUint8(p)<<16)|(d.getUint8(p+1)<<8)|d.getUint8(p+2)});p+=l}
+   else if(s===0xF0||s===0xF7){p+=vl()}
+   else{rs=s;const ty=s&0xF0,ch=s&15;const a=d.getUint8(p++);const b=(ty===0xC0||ty===0xD0)?0:d.getUint8(p++);
+    if(ty===0x90&&b>0){(on[ch*128+a]=on[ch*128+a]||[]).push({tick,v:b})}
+    else if(ty===0x80||(ty===0x90&&b===0)){const st=on[ch*128+a]&&on[ch*128+a].shift();if(st&&ch!==9)notes.push({a:st.tick,b:tick,m:a,v:st.v})}}}
+  p=end}
+ tempos.sort((x,y)=>x.tick-y.tick);const seg=[];let sec=0,lt=0,us=500000;for(const tp of tempos){sec+=(tp.tick-lt)*us/1e6/div;lt=tp.tick;us=tp.us;seg.push({tick:lt,sec,us})}
+ const t2s=k=>{let g=seg[0];for(const s of seg)if(s.tick<=k)g=s;else break;return g.sec+(k-g.tick)*g.us/1e6/div};
+ return notes.map(n=>({t:t2s(n.a),d:Math.max(.05,t2s(n.b)-t2s(n.a)),m:n.m,v:n.v/127})).sort((a,b)=>a.t-b.t)}
+function parseMusicXML(xml){const doc=new DOMParser().parseFromString(xml,'text/xml');if(doc.querySelector('parsererror'))throw new Error('MusicXML inválido');
+ const tm=doc.querySelector('sound[tempo]');const bpm=tm?+tm.getAttribute('tempo')||100:100;const ev=[];const ST={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+ doc.querySelectorAll('part').forEach(part=>{let div=1,cur=0,last=0;const tied={};
+  part.querySelectorAll('measure').forEach(me=>{[...me.children].forEach(el=>{const tn=el.tagName;
+   if(tn==='attributes'){const dv=el.querySelector('divisions');if(dv)div=+dv.textContent||1}
+   else if(tn==='backup')cur-=(+el.querySelector('duration').textContent)/div;
+   else if(tn==='forward')cur+=(+el.querySelector('duration').textContent)/div;
+   else if(tn==='note'){const dur=el.querySelector('duration')?(+el.querySelector('duration').textContent)/div:0;const chord=el.querySelector('chord');if(el.querySelector('grace')){return}
+    const st=chord?last:cur;if(!chord){last=cur}
+    const pi=el.querySelector('pitch');if(pi&&!el.querySelector('rest')){const oc=+pi.querySelector('octave').textContent,al=pi.querySelector('alter')?+pi.querySelector('alter').textContent:0;const m=(oc+1)*12+ST[pi.querySelector('step').textContent]+al;
+     const ties=[...el.querySelectorAll('tie')].map(x=>x.getAttribute('type'));
+     if(ties.includes('stop')&&tied[m]){tied[m].d+=dur*60/bpm;if(!ties.includes('start'))delete tied[m]}
+     else{const o={t:st*60/bpm,d:dur*60/bpm,m,v:.8};ev.push(o);if(ties.includes('start'))tied[m]=o}}
+    if(!chord)cur+=dur}})})});
+ return ev.sort((a,b)=>a.t-b.t)}
+function abcToEvents(abc){const r=ABC.synth.getMidiFile(abc,{midiOutputType:'binary'});let a=Array.isArray(r)?r[0]:r;if(a instanceof ArrayBuffer)a=new Uint8Array(a);else if(Array.isArray(a))a=new Uint8Array(a);if(!a||!a.length)throw new Error('ABC sem notas');return parseMidi(a)}
+
+/* ===== sintetizador WebAudio ===== */
+let AC=null,P={ev:[],playing:false,pos:0,rate:1,timbre:'piano',idx:0,t0:0,p0:0,timer:null,raf:0,end:0};
+const fq=m=>440*Math.pow(2,(m-69)/12);
+function voice(m,v,when,dur){const g=AC.createGain(),o1=AC.createOscillator(),o2=AC.createOscillator(),g2=AC.createGain();const f=fq(m);const tb=P.timbre;
+ o1.type=tb==='orgao'?'square':tb==='suave'?'sine':'triangle';o1.frequency.value=f;o2.type='sine';o2.frequency.value=f*2;g2.gain.value=tb==='suave'?.05:.22;
+ const pk=Math.min(.34,.1+v*.26)*(tb==='orgao'?.5:1);const rel=.16;
+ g.gain.setValueAtTime(0,when);g.gain.linearRampToValueAtTime(pk,when+.01);
+ if(tb==='piano'){g.gain.exponentialRampToValueAtTime(Math.max(pk*.35,.001),when+Math.min(dur,1.4)+.01)}else g.gain.setValueAtTime(pk*.8,when+dur);
+ g.gain.setValueAtTime(g.gain.value,when+dur);g.gain.linearRampToValueAtTime(0.0001,when+dur+rel);
+ o1.connect(g);o2.connect(g2);g2.connect(g);g.connect(P.master);o1.start(when);o2.start(when);o1.stop(when+dur+rel+.02);o2.stop(when+dur+rel+.02)}
+function ensureAC(){if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();P.master=AC.createGain();P.master.gain.value=.8;const c=AC.createDynamicsCompressor();P.master.connect(c);c.connect(AC.destination)}if(AC.state==='suspended')AC.resume()}
+const posNow=()=>P.playing?Math.min(P.end,P.p0+(AC.currentTime-P.t0)*P.rate):P.pos;
+function play(){if(!P.ev.length)return toast('Nada para tocar ainda');ensureAC();if(P.pos>=P.end-.05)P.pos=0;P.p0=P.pos;P.t0=AC.currentTime+.08;P.idx=P.ev.findIndex(e=>e.t>=P.pos-.001);if(P.idx<0)P.idx=P.ev.length;P.playing=true;
+ clearInterval(P.timer);P.timer=setInterval(()=>{const now=AC.currentTime,la=now+.35;while(P.idx<P.ev.length){const e=P.ev[P.idx];const w=P.t0+(e.t-P.p0)/P.rate;if(w>la)break;if(w>=now-.05)voice(e.m,e.v,Math.max(w,now),Math.max(.06,e.d/P.rate));P.idx++}
+  if(posNow()>=P.end){P.pos=P.end;stopPlay(true)}},40);loopUI();updBtn()}
+function pausePlay(){if(!P.playing)return;P.pos=posNow();P.playing=false;clearInterval(P.timer);updBtn()}
+function stopPlay(done){clearInterval(P.timer);cancelAnimationFrame(P.raf);P.playing=false;if(!done)P.pos=0;if(AC&&P.master){P.master.disconnect();P.master=AC.createGain();P.master.gain.value=.8;const c=AC.createDynamicsCompressor();P.master.connect(c);c.connect(AC.destination)}drawRoll();updBtn();updTime()}
+function seek(s){const was=P.playing;if(was)pausePlay();if(AC&&P.master){P.master.disconnect();P.master=AC.createGain();P.master.gain.value=.8;const c=AC.createDynamicsCompressor();P.master.connect(c);c.connect(AC.destination)}P.pos=Math.max(0,Math.min(P.end,s));updTime();drawRoll();if(was)play()}
+function updBtn(){const b=$('#bPlay');if(b)b.textContent=P.playing?'⏸ Pausar':'▶ Tocar'}
+const fmt=s=>{s=Math.max(0,s);return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
+function updTime(){const t=$('#tm'),sl=$('#seek');if(t)t.textContent=fmt(posNow())+' / '+fmt(P.end);if(sl&&document.activeElement!==sl)sl.value=P.end?posNow()/P.end*1000:0}
+function loopUI(){cancelAnimationFrame(P.raf);const f=()=>{updTime();drawRoll();if(P.playing)P.raf=requestAnimationFrame(f)};f()}
+function drawRoll(){const c=$('#roll');if(!c)return;const w=c.clientWidth*devicePixelRatio,h=c.clientHeight*devicePixelRatio;if(c.width!==w||c.height!==h){c.width=w;c.height=h}const x=c.getContext('2d');x.clearRect(0,0,w,h);if(!P.ev.length)return;
+ let lo=127,hi=0;P.ev.forEach(e=>{lo=Math.min(lo,e.m);hi=Math.max(hi,e.m)});lo-=2;hi+=2;const rh=h/(hi-lo+1);const st=getComputedStyle(document.body);x.fillStyle=st.getPropertyValue('--accent').trim()||'#2b4a8b';
+ P.ev.forEach(e=>{x.globalAlpha=.55+.4*e.v;x.fillRect(e.t/P.end*w,(hi-e.m)*rh,Math.max(2,e.d/P.end*w),Math.max(2,rh-1))});x.globalAlpha=1;
+ x.fillStyle=st.getPropertyValue('--mark').trim()||'#c33';x.fillRect(posNow()/P.end*w,0,2*devicePixelRatio,h)}
+
+/* ===== aba Som ===== */
+function setEvents(ev){P.ev=ev;P.end=ev.length?Math.max(...ev.map(e=>e.t+e.d)):0;P.pos=0}
+async function loadFromScore(){const n=S.n;try{if(n.abc&&n.abc.trim())await needAbc();
+  if(n.kind==='midi'){return n.midi.arrayBuffer().then(b=>{setEvents(parseMidi(b));afterLoad()})}
+  if(n.kind==='musicxml'){setEvents(parseMusicXML(n.xml));return afterLoad()}
+  if(n.abc&&n.abc.trim()){setEvents(abcToEvents(n.abc));return afterLoad()}
+ }catch(e){console.error(e);setEvents([]);msg('Não consegui ler a música: '+e.message,1);afterLoad()}
+ setEvents([]);afterLoad()}
+function msg(t,err){const m=$('#smsg');if(m)m.innerHTML=t?`<div class="msg ${err?'err':''}">${esc(t)}</div>`:''}
+function afterLoad(){updTime();drawRoll();const pp=$('#paper');if(pp&&S.n.abc&&ABC){try{ABC.renderAbc('paper',S.n.abc,{responsive:'resize',add_classes:true})}catch(e){}}}
+function renderSom(box){const n=S.n;stopPlay();const canAbc=n.kind==='abc'||hasPages(n);
+ box.innerHTML=`<div id="smsg"></div>
+ ${hasPages(n)?`<div class="msg">Para tocar a partitura de uma foto/PDF, o Claude lê a imagem e a transcreve em notação ABC. É aproximado: confira e corrija o texto abaixo. Funciona melhor com uma página nítida, de frente e bem iluminada.</div><div class="tools"><button class="btn pri" id="bOcr">🎼 Transcrever página ${S.pg+1} com IA</button></div>`:''}
+ ${n.kind==='musicxml'?'<div class="msg">MusicXML importado. A reprodução usa as notas do arquivo (sem renderizar a pauta).</div>':''}
+ ${n.kind==='midi'?'<div class="msg">MIDI importado. Reprodução e piano-roll abaixo.</div>':''}
+ <div class="player"><button class="btn pri" id="bPlay">▶ Tocar</button><button class="btn" id="bStop">⏹ Parar</button><input type="range" id="seek" min="0" max="1000" value="0" style="flex:1;min-width:120px"><span class="mono" id="tm">0:00 / 0:00</span>
+ <label class="mono">Tempo <select id="rate" class="fld" style="width:auto"><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option></select></label>
+ <label class="mono">Timbre <select id="timb" class="fld" style="width:auto"><option value="piano">Piano</option><option value="orgao">Órgão</option><option value="suave">Suave</option></select></label></div>
+ <canvas class="roll" id="roll"></canvas>
+ ${canAbc?`<h3 style="margin:16px 0 6px;font-size:22px">Notação ABC (editável)</h3><textarea class="fld" id="abcbox" spellcheck="false" placeholder="X:1&#10;T:Título&#10;M:4/4&#10;L:1/4&#10;K:C&#10;CDEF|GABc|">${esc(n.abc||'')}</textarea><div class="tools" style="margin-top:6px"><button class="btn" id="bApply">Aplicar e ouvir</button></div><div id="paper"></div>`:''}`;
+ $('#bPlay').onclick=()=>P.playing?pausePlay():play();$('#bStop').onclick=()=>stopPlay();
+ $('#seek').oninput=e=>seek(e.target.value/1000*P.end);
+ $('#rate').onchange=e=>{const was=P.playing;if(was)pausePlay();P.rate=+e.target.value;if(was)play()};$('#rate').value=String(P.rate);
+ $('#timb').onchange=e=>P.timbre=e.target.value;$('#timb').value=P.timbre;
+ $('#roll').onclick=e=>{const r=e.target.getBoundingClientRect();seek((e.clientX-r.left)/r.width*P.end)};
+ if(canAbc){$('#bApply').onclick=async()=>{try{await needAbc()}catch(e){return msg(e.message,1)}n.abc=$('#abcbox').value;dbPut(n);try{setEvents(abcToEvents(n.abc));msg('');afterLoad();play()}catch(e){msg('ABC inválido: '+e.message,1)}};$('#abcbox').oninput=e=>{n.abc=e.target.value;saveSoon()}}
+ if(hasPages(n))$('#bOcr').onclick=transcribe;
+ loadFromScore()}
+
+/* ===== OCR musical via Claude (sample) ===== */
+async function pageBlob(){const n=S.n;if(n.kind==='image')return n.pages[S.pg];const pgd=await pdfDoc.getPage(S.pg+1);const vp0=pgd.getViewport({scale:1});const vp=pgd.getViewport({scale:Math.min(2,1600/vp0.width)});const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;await pgd.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;return cvBlob(c,.9)}
+async function transcribe(){const sample=window.claude?await claude.use('sample'):null;if(!sample)return msg('Transcrição por IA indisponível neste ambiente.',1);
+ const lim=await sample.limits();if(!lim||!lim.images)return msg('Leitura de imagem indisponível neste ambiente.',1);
+ const btn=$('#bOcr');btn.disabled=true;btn.textContent='Lendo a partitura…';msg('');
+ try{const b=await pageBlob();
+  const r=await sample(`Você é um transcritor de partituras (OMR). Leia a imagem da partitura e transcreva-a em notação ABC (v2.1) completa e válida, para ser tocada. Regras: inclua os campos X:1, T: (título, se visível), M: (compasso), L:, Q: (andamento, se indicado ou estime), K: (armadura). Se houver várias pautas/vozes, use V:1, V:2 etc. com %%score se necessário. Preserve alturas, durações, pausas, ligaduras, acidentes, repetições e barras de compasso o melhor possível. Se algum trecho estiver ilegível, escreva o que for plausível e marque o ponto com um comentário %? . Responda SOMENTE com o código ABC, sem explicações e sem cercas de código.`,{images:[b],modelTier:'complex',cache:false});
+  let t=(r.text||'').replace(/```[a-z]*\n?/gi,'').trim();if(!/^X:/m.test(t)||!/^K:/m.test(t))throw new Error('A resposta não parece ABC válido. Tente de novo com uma foto mais nítida.');
+  S.n.abc=t;await dbPut(S.n);renderSom($('#pane'));msg('Transcrição pronta. Revise o ABC e toque em “Aplicar e ouvir” se editar.')}
+ catch(e){const c=e&&e.code;msg(c==='not_granted'?'Permissão negada para usar a IA.':c==='rate_limited'?'Limite de uso atingido. Tente em alguns minutos.':c==='image_rejected'?'A imagem foi recusada. Tente outra foto.':(e&&e.message)||'Falha na transcrição',1);btn.disabled=false;btn.textContent='🎼 Transcrever página '+(S.pg+1)+' com IA'}}
+
+/* ===== boot ===== */
+(async()=>{try{const ok=await openDB();if(!ok){memMode=true;toast('Armazenamento local indisponível: os dados só duram nesta sessão')}await reload();render();if(window.__afterBoot)await window.__afterBoot()}catch(e){document.body.insertAdjacentHTML('afterbegin','<p style="padding:20px">Erro ao iniciar: '+esc(e.message)+'</p>')}})();
+
+window.__afterBoot=async()=>{
+ if(!/[?&]share=1/.test(location.search))return;
+ history.replaceState(null,"",location.pathname);
+ try{
+  const c=await caches.open("jscore-share"),keys=await c.keys(),files=[];
+  for(const k of keys){const r=await c.match(k),b=await r.blob();let nm=decodeURIComponent(k.url.split("/").pop().replace(/^\d+-/,""));files.push(new File([b],nm,{type:b.type}))}
+  if(!files.length)return;
+  toast(files.length+" arquivo(s) recebido(s) do compartilhamento");
+  const p=await pickFolder("Guardar "+files.length+" arquivo(s) em…",null,"Importar aqui");
+  if(p)await importFiles(files,p.id);else toast("Importação cancelada");
+  for(const k of keys)await c.delete(k);
+ }catch(e){toast("Não consegui receber o arquivo compartilhado")}
+};
+
+if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"))navigator.serviceWorker.register("sw.js").catch(function(){});
+</script>
+
+
+</body></html>

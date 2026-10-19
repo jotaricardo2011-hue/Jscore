@@ -483,8 +483,8 @@ function abcKeys(abc){try{const d=document.createElement('div');d.style.cssText=
  const PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11},rp=(r,a)=>r==null?null:(((PC[String(r).toUpperCase()]+(a==='#'?1:a==='b'?-1:0))%12)+12)%12;
  const sl=vo.lines.filter(l=>l.staff),lk=sl.map(l=>{const k=l.staff[0]&&l.staff[0].key;return k?rp(k.root,k.acc):null});
  const inl=[];sl.forEach(l=>l.staff.forEach(st=>(st.voices||[]).forEach(v=>v.forEach(el=>{if(el.el_type==='key'||el.el_type==='keySignature')inl.push({sc:el.startChar,pc:rp(el.root,el.acc)})}))));
- const out=[];let cur=null,prev=-1;const push=(t,pc)=>{if(pc!=null&&pc!==cur){out.push({t,pc});cur=pc}};
- (vo.noteTimings||[]).filter(e=>e.type==='event'&&e.startChar!==undefined).forEach(e=>{inl.forEach(k=>{if(prev<k.sc&&e.startChar>=k.sc)push(e.milliseconds/1000,k.pc)});push(e.milliseconds/1000,lk[e.line]);prev=e.startChar});
+ const out=[];let cur=null,prev=-1,pl=-1;const push=(t,pc)=>{if(pc!=null&&pc!==cur){out.push({t,pc});cur=pc}};
+ (vo.noteTimings||[]).filter(e=>e.type==='event'&&e.startChar!==undefined).forEach(e=>{const t=e.milliseconds/1000;if(e.line!==pl){push(t,lk[e.line]);pl=e.line}inl.forEach(k=>{if(prev<k.sc&&e.startChar>=k.sc)push(t,k.pc)});prev=e.startChar});
  return out}catch(e){return []}}
 function buildPed(){P.pd=[];if(P.pedMode==='off'||!P.end)return;
  let ks=P.pedNote>=0?[{t:0,pc:P.pedNote}]:(P.keys||[]).slice().sort((a,b)=>a.t-b.t);

@@ -63,7 +63,7 @@ main{background:var(--panel);border:1px solid var(--line);border-radius:14px;ove
 .tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .sw{width:24px;height:24px;border-radius:50%;border:2px solid var(--card);outline:1px solid var(--line);padding:0}
 .sw.on{outline:2px solid var(--accent)}
-.page{position:relative;display:inline-block;max-width:100%;background:#fff;box-shadow:var(--shadow);touch-action:pan-y pinch-zoom}
+.page{position:relative;display:inline-block;max-width:100%;background:#fff;box-shadow:var(--shadow);touch-action:pan-x pan-y}
 .page.draw{touch-action:none}
 .page img,.page canvas.base{display:block;max-width:100%;height:auto}
 .page canvas.ov{position:absolute;inset:0;width:100%;height:100%}
@@ -300,21 +300,21 @@ function renderViewer(){const n=S.n,m=$('#main');m.classList.remove('focus');
 function renderNotes(){const p=$('#pane');p.innerHTML=`<p class="mute">Anotações livres sobre esta peça (andamento, dedilhado, tom, observações do ensaio…).</p><textarea class="fld" id="nt" rows="12">${esc(S.n.notes||'')}</textarea>`;$('#nt').oninput=e=>{S.n.notes=e.target.value;saveSoon()}}
 function renderPart(){const n=S.n,p=$('#pane'),N=nPg(n);$('#main').classList.toggle('focus',!!S.hide);
  p.innerHTML=`${S.hide?`<div class="fab"><button class="btn" id="fP">◀</button><span class="mono">${S.pg+1}/${N||1}</span><button class="btn" id="fN">▶</button>${(()=>{const {ci,ix}=cultoNb(n);return (ix>0?'<button class="btn" id="fPrev">⏮ Anterior</button>':'')+(ix>=0&&ix<ci.length-1?'<button class="btn" id="fNext">Próxima peça ⏭</button>':'')})()}<button class="btn" id="fMet" title="Metrônomo">🥁</button><button class="btn" id="fFs" title="Tela cheia">⛶</button><button class="btn pri" id="fShow">☰ Ferramentas</button></div>`:''}<div id="bars" ${S.hide?'hidden':''}><div class="pgs"><button class="btn" id="hideT">▴ Ocultar</button><button class="btn" id="pP">◀</button><span class="mono">página ${S.pg+1} / ${N||1}</span><button class="btn" id="pN">▶</button>
- <button class="btn" id="zM">−</button><span class="mono">${S.zoom}%</span><button class="btn" id="zP">＋</button><button class="btn ${WAKE?'on':''}" id="wk">💡 Tela acesa</button>
+ <button class="btn" id="zM">−</button><span class="mono" id="zL">${Math.round(S.zoom)}%</span><button class="btn" id="zP">＋</button><button class="btn ${WAKE?'on':''}" id="wk">💡 Tela acesa</button>
  ${n.kind==='image'?`<button class="btn" id="pRot">⟳ Girar</button><button class="btn" id="pEnh">✨ Realçar</button><button class="btn" id="pCrop">✂ Endireitar/cortar</button><button class="btn" id="pDel">🗑 Página</button><button class="btn" id="pAdd">＋ Página (foto)</button>`:''}</div>
  <div class="tools">${[['read','👆 Ler'],['pen','✏️ Caneta'],['hl','🖍 Marca-texto'],['tx','🅣 Texto'],['er','🧽 Borracha']].map(([k,l])=>`<button class="btn ${S.tool===k?'on':''}" data-tool="${k}">${l}</button>`).join('')}
  ${COLORS.map(c=>`<button class="sw ${S.color===c?'on':''}" data-c="${c}" style="background:${c}" aria-label="cor"></button>`).join('')}
  <input type="range" id="tw" min="1" max="10" value="${S.w}" aria-label="espessura">
  <button class="btn" id="aUndo">↶ Desfazer</button><button class="btn dng" id="aClr">Limpar página</button></div>${S.tool==='tx'?`<div class="tools" id="chips">${PRE.map(t=>`<button class="chip ${S.preset===t?'on':''}" data-pre="${esc(t)}">${esc(t)}</button>`).join('')}<button class="chip ${!S.preset?'on':''}" data-pre="">✎ Digitar…</button></div>`:''}</div>
- <div id="pw" style="overflow:auto;max-height:${S.hide?'calc(100vh - 20px)':'calc(100vh - 260px)'};border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px"><div class="page ${S.tool!=='read'?'draw':''}" id="pg" style="width:${S.zoom}%;max-width:none"></div></div>`;
+ <div id="pw" style="overflow:auto;touch-action:pan-x pan-y;overscroll-behavior:contain;max-height:${S.hide?'calc(100vh - 20px)':'calc(100vh - 260px)'};border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px"><div class="page ${S.tool!=='read'?'draw':''}" id="pg" style="width:${S.zoom}%;max-width:none"></div></div>`;
  const goP=()=>{if(S.pg>0){S.pg--;S.undo=[];renderPart()}},goN=()=>{if(S.pg<N-1){S.pg++;S.undo=[];renderPart()}};
- $('#pw').onclick=e=>{if(S.tool!=='read')return;const r=e.currentTarget.getBoundingClientRect();const x=(e.clientX-r.left)/r.width;const {ci,ix}=cultoNb(n);if(x<.18){if(S.pg>0)goP();else if(S.hide&&ix>0)goPiece(ci[ix-1])}else if(x>.82){if(S.pg<N-1)goN();else if(S.hide&&ix>=0&&ix<ci.length-1)goPiece(ci[ix+1])}};
+ $('#pw').onclick=e=>{if(S.tool!=='read'||ZM.pinched)return;const r=e.currentTarget.getBoundingClientRect();const x=(e.clientX-r.left)/r.width;if(x>=.18&&x<=.82){const t=Date.now();if(t-ZM.tap<320){ZM.tap=0;setZoom(S.zoom<150?200:100,e.clientX,e.clientY)}else ZM.tap=t;return}const {ci,ix}=cultoNb(n);if(x<.18){if(S.pg>0)goP();else if(S.hide&&ix>0)goPiece(ci[ix-1])}else if(x>.82){if(S.pg<N-1)goN();else if(S.hide&&ix>=0&&ix<ci.length-1)goPiece(ci[ix+1])}};
  if(S.hide){$('#fFs').onclick=fsToggle;$('#fMet').onclick=()=>togglePanel('met');$('#fP').onclick=goP;$('#fN').onclick=goN;$('#fShow').onclick=()=>{S.hide=false;renderPart()};{const {ci,ix}=cultoNb(n);const fnx=$('#fNext'),fpv=$('#fPrev');if(fnx)fnx.onclick=()=>goPiece(ci[ix+1]);if(fpv)fpv.onclick=()=>goPiece(ci[ix-1])};return mountPage()}
  $('#hideT').onclick=()=>{S.hide=true;renderPart()};
  $('#wk').onclick=()=>{WAKE=!WAKE;if(WAKE){WLmsg=false;wake();toast('Tela ficará acesa durante a leitura')}else{unwake();toast('Tela acesa desligada')}renderPart()};
  p.querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{S.preset=b.dataset.pre||null;renderPart()});
  $('#pP').onclick=goP;$('#pN').onclick=goN;
- $('#zM').onclick=()=>{S.zoom=Math.max(50,S.zoom-25);renderPart()};$('#zP').onclick=()=>{S.zoom=Math.min(300,S.zoom+25);renderPart()};
+ $('#zM').onclick=()=>zoomStep(-25);$('#zP').onclick=()=>zoomStep(25);
  p.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{S.tool=b.dataset.tool;renderPart()});
  p.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{S.color=b.dataset.c;if(S.tool==='read'||S.tool==='er')S.tool='pen';renderPart()});
  $('#tw').oninput=e=>S.w=+e.target.value;
@@ -327,10 +327,30 @@ function renderPart(){const n=S.n,p=$('#pane'),N=nPg(n);$('#main').classList.tog
   $('#pAdd').onclick=()=>$('#fAdd').click()}
  mountPage()}
 $('#fAdd').onchange=async e=>{const fs=[...e.target.files];e.target.value='';if(!S||S.n.kind!=='image')return;for(const f of fs){if(f.type.startsWith('image/'))S.n.pages.push(await procImage(f))}await dbPut(S.n);S.pg=S.n.pages.length-1;renderPart();if(fs.length===1)cropPage()};
-async function mountPage(){const n=S.n,box=$('#pg');let base;
+async function mountPage(){const n=S.n,box=$('#pg');let base;bindZoom();
  if(n.kind==='image'){base=document.createElement('img');base.style.cssText='display:block;width:100%;height:auto';base.src=URL.createObjectURL(n.pages[S.pg]);await new Promise(r=>base.onload=r)}
- else{base=document.createElement('canvas');base.style.cssText='display:block;width:100%;height:auto';if(!pdfDoc){box.textContent='PDF indisponível';return}const pgd=await pdfDoc.getPage(S.pg+1);const vp0=pgd.getViewport({scale:1});const sc=Math.min(2.2,1500/vp0.width);const vp=pgd.getViewport({scale:sc});base.width=vp.width;base.height=vp.height;await pgd.render({canvasContext:base.getContext('2d'),viewport:vp}).promise}
+ else{base=document.createElement('canvas');base.id='pbase';base.style.cssText='display:block;width:100%;height:auto';if(!pdfDoc){box.textContent='PDF indisponível';return}await drawPdfBase(base)}
  box.innerHTML='';box.appendChild(base);const ov=document.createElement('canvas');ov.className='ov';ov.id='ov';const W=base.naturalWidth||base.width,H=base.naturalHeight||base.height;ov.width=Math.min(W,2000);ov.height=Math.round(ov.width*H/W);ov.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%';box.appendChild(ov);bindDraw(ov);drawAnn()}
+/* ===== zoom: pinça com dois dedos, toque duplo, Ctrl+roda; PDF redesenhado nítido no zoom ===== */
+const ZM={pinched:false,tap:0,t:null};
+function pdfTargetW(vp0w){const pw=$('#pw');const css=((pw?pw.clientWidth:900)-16)*S.zoom/100;const dpr=Math.min(3,window.devicePixelRatio||1);return Math.max(1200,Math.min(4800,css*dpr))}
+async function drawPdfBase(cv){const pgd=await pdfDoc.getPage(S.pg+1);const vp0=pgd.getViewport({scale:1});let sc=pdfTargetW(vp0.width)/vp0.width;
+ const maxA=16e6;if(vp0.width*vp0.height*sc*sc>maxA)sc=Math.sqrt(maxA/(vp0.width*vp0.height));
+ const vp=pgd.getViewport({scale:sc});const off=document.createElement('canvas');off.width=Math.round(vp.width);off.height=Math.round(vp.height);
+ await pgd.render({canvasContext:off.getContext('2d'),viewport:vp}).promise;cv.width=off.width;cv.height=off.height;cv.getContext('2d').drawImage(off,0,0);cv.dataset.w=off.width}
+function hiResSoon(){clearTimeout(ZM.t);ZM.t=setTimeout(async()=>{const cv=$('#pbase');if(!cv||!pdfDoc||!S)return;const pg=S.pg;const pgd=await pdfDoc.getPage(pg+1);const w0=pgd.getViewport({scale:1}).width;
+ const want=pdfTargetW(w0),have=+cv.dataset.w||cv.width;if(want>have*1.15||want<have*0.5){if(S.pg!==pg)return;await drawPdfBase(cv)}},280)}
+function setZoom(z,cx,cy){const pw=$('#pw'),pg=$('#pg');if(!pw||!pg||!S)return;z=Math.max(50,Math.min(400,z));const r=pw.getBoundingClientRect();
+ if(cx==null){cx=r.left+r.width/2;cy=r.top+r.height/2}const ox=cx-r.left+pw.scrollLeft,oy=cy-r.top+pw.scrollTop,k=z/S.zoom;S.zoom=z;pg.style.width=z+'%';
+ pw.scrollLeft=ox*k-(cx-r.left);pw.scrollTop=oy*k-(cy-r.top);const lb=$('#zL');if(lb)lb.textContent=Math.round(z)+'%';hiResSoon()}
+function zoomStep(d){setZoom(Math.round((S.zoom+d)/25)*25)}
+function bindZoom(){const pw=$('#pw');if(!pw||pw.dataset.zb)return;pw.dataset.zb=1;let st=null;
+ const two=e=>{const [a,b]=e.touches;return {d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2}};
+ pw.addEventListener('touchstart',e=>{if(e.touches.length===2&&S&&S.tool==='read'){const g=two(e);st={d:g.d,z:S.zoom};ZM.pinched=true;e.preventDefault()}},{passive:false});
+ pw.addEventListener('touchmove',e=>{if(st&&e.touches.length===2){const g=two(e);setZoom(st.z*g.d/st.d,g.x,g.y);e.preventDefault()}},{passive:false});
+ const end=e=>{if(e.touches.length<2)st=null;if(!e.touches.length&&ZM.pinched)setTimeout(()=>ZM.pinched=false,350)};
+ pw.addEventListener('touchend',end);pw.addEventListener('touchcancel',end);
+ pw.addEventListener('wheel',e=>{if(!e.ctrlKey||!S)return;e.preventDefault();setZoom(S.zoom*Math.exp(-e.deltaY*0.0025),e.clientX,e.clientY)},{passive:false})}
 const annList=()=>S.n.ann[S.pg]||(S.n.ann[S.pg]=[]);
 function pushUndo(){S.undo.push(JSON.stringify(annList()));if(S.undo.length>40)S.undo.shift()}
 function drawAnn(){const ov=$('#ov');if(!ov)return;const c=ov.getContext('2d');c.clearRect(0,0,ov.width,ov.height);paintAnn(c,ov.width,ov.height,annList())}

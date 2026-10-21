@@ -285,7 +285,7 @@ const nPg=n=>n.kind==='pdf'?(n.nPages||1):(n.pages||[]).length;
 function saveSoon(){const n=S.n;clearTimeout(saveT);saveT=setTimeout(()=>dbPut(n),400)}
 async function openScore(id){sideHide();stopPlay&&stopPlay();viewing=id;pdfDoc=null;const n=byId(id);
  const v0=loadView(id);S={n,tab:hasPages(n)?'part':'som',pg:Math.max(0,Math.min(v0.pg||0,(n.kind==='pdf'?(n.nPages||1):(n.pages||[]).length||1)-1)),tool:'read',color:COLORS[0],w:3,zoom:v0.zoom||100,undo:[],hide:KEEPHIDE||prefHide(),restore:v0.pg!=null?v0:null};wake();
- if(n.kind==='pdf'){try{pdfDoc=await (await needPdf()).getDocument({data:await n.pdf.arrayBuffer()}).promise}catch(e){toast('Não consegui abrir o PDF')}}
+ if(n.kind==='pdf'){try{pdfDoc=await (await needPdf()).getDocument({data:await n.pdf.arrayBuffer()}).promise;await detectParts();if(v0.pg==null){const mp=myPartPage();if(mp>0){S.pg=mp;toast('Abrindo na sua parte: '+n.partNames[mp])}}}catch(e){toast('Não consegui abrir o PDF')}}
  renderViewer()}
 function closeScore(){stopPlay&&stopPlay();clearTimeout(saveT);dbPut(S.n);unwake();viewing=null;S=null;reload().then(render)}
 function renderViewer(){const n=S.n,m=$('#main');m.classList.remove('focus');
@@ -301,8 +301,8 @@ function renderViewer(){const n=S.n,m=$('#main');m.classList.remove('focus');
  if(S.tab==='part')renderPart();else if(S.tab==='som')renderSom($('#pane'));else renderNotes()}
 function renderNotes(){const p=$('#pane');p.innerHTML=`<p class="mute">Anotações livres sobre esta peça (andamento, dedilhado, tom, observações do ensaio…).</p><textarea class="fld" id="nt" rows="12">${esc(S.n.notes||'')}</textarea>`;$('#nt').oninput=e=>{S.n.notes=e.target.value;saveSoon()}}
 function renderPart(){const n=S.n,p=$('#pane'),N=nPg(n);{const pw0=$('#pw');if(pw0&&!S.restore&&S.shownPg===S.pg)S.restore={pg:S.pg,sx:pw0.scrollLeft/Math.max(1,pw0.scrollWidth),sy:pw0.scrollTop/Math.max(1,pw0.scrollHeight)}}$('#main').classList.toggle('focus',!!S.hide);
- p.innerHTML=`${S.hide?`<div class="fab"><button class="btn" id="fP">◀</button><span class="mono">${S.pg+1}/${N||1}</span><button class="btn" id="fN">▶</button>${(()=>{const {ci,ix}=cultoNb(n);return (ix>0?'<button class="btn" id="fPrev">⏮ Anterior</button>':'')+(ix>=0&&ix<ci.length-1?'<button class="btn" id="fNext">Próxima peça ⏭</button>':'')})()}<button class="btn" id="fMk" title="Trechos marcados">📍</button><button class="btn" id="fMet" title="Metrônomo">🥁</button><button class="btn" id="fFs" title="Tela cheia">⛶</button><button class="btn pri" id="fShow">☰ Ferramentas</button></div>`:''}<div id="bars" ${S.hide?'hidden':''}><div class="pgs"><button class="btn" id="hideT">▴ Ocultar</button><button class="btn" id="pP">◀</button><span class="mono">página ${S.pg+1} / ${N||1}</span><button class="btn" id="pN">▶</button>
- <button class="btn" id="zM">−</button><span class="mono" id="zL">${Math.round(S.zoom)}%</span><button class="btn" id="zP">＋</button><button class="btn ${WAKE?'on':''}" id="wk">💡 Tela acesa</button><button class="btn ${S.marking?'on':''}" id="mkA">📌 Marcar trecho</button><button class="btn" id="mkL">📍 Trechos${(n.marks||[]).length?' ('+n.marks.length+')':''}</button>
+ p.innerHTML=`${S.hide?`<div class="fab"><button class="btn" id="fP">◀</button><span class="mono">${S.pg+1}/${N||1}</span><button class="btn" id="fN">▶</button>${(()=>{const {ci,ix}=cultoNb(n);return (ix>0?'<button class="btn" id="fPrev">⏮ Anterior</button>':'')+(ix>=0&&ix<ci.length-1?'<button class="btn" id="fNext">Próxima peça ⏭</button>':'')})()}<button class="btn pri" id="fOuv" title="Ouvir esta página">▶</button><button class="btn" id="fMk" title="Trechos marcados">📍</button><button class="btn" id="fMet" title="Metrônomo">🥁</button><button class="btn" id="fFs" title="Tela cheia">⛶</button><button class="btn pri" id="fShow">☰ Ferramentas</button></div>`:''}<div id="bars" ${S.hide?'hidden':''}><div class="pgs"><button class="btn" id="hideT">▴ Ocultar</button><button class="btn" id="pP">◀</button><span class="mono">página ${S.pg+1} / ${N||1}</span><button class="btn" id="pN">▶</button>
+ <button class="btn" id="zM">−</button><span class="mono" id="zL">${Math.round(S.zoom)}%</span><button class="btn" id="zP">＋</button><button class="btn ${WAKE?'on':''}" id="wk">💡 Tela acesa</button><button class="btn ${S.marking?'on':''}" id="mkA">📌 Marcar trecho</button><button class="btn pri" id="bOuv">▶ Ouvir${(n.abcPages||{})[S.pg]?'':' (IA)'}</button><button class="btn" id="mkL">📍 Trechos${(n.marks||[]).length?' ('+n.marks.length+')':''}</button>
  ${n.kind==='image'?`<button class="btn" id="pRot">⟳ Girar</button><button class="btn" id="pEnh">✨ Realçar</button><button class="btn" id="pCrop">✂ Endireitar/cortar</button><button class="btn" id="pDel">🗑 Página</button><button class="btn" id="pAdd">＋ Página (foto)</button>`:''}</div>
  <div class="tools">${[['read','👆 Ler'],['pen','✏️ Caneta'],['hl','🖍 Marca-texto'],['tx','🅣 Texto'],['er','🧽 Borracha']].map(([k,l])=>`<button class="btn ${S.tool===k?'on':''}" data-tool="${k}">${l}</button>`).join('')}
  ${COLORS.map(c=>`<button class="sw ${S.color===c?'on':''}" data-c="${c}" style="background:${c}" aria-label="cor"></button>`).join('')}
@@ -311,8 +311,8 @@ function renderPart(){const n=S.n,p=$('#pane'),N=nPg(n);{const pw0=$('#pw');if(p
  <div id="pw" class="${S.marking?'marking':''}" style="overflow:auto;touch-action:pan-x pan-y;overscroll-behavior:contain;max-height:${S.hide?'calc(100vh - 20px)':'calc(100vh - 260px)'};border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px"><div class="page ${S.tool!=='read'?'draw':''}" id="pg" style="width:${S.zoom}%;max-width:none"></div></div>`;
  const goP=()=>{if(S.pg>0){S.pg--;S.undo=[];renderPart()}},goN=()=>{if(S.pg<N-1){S.pg++;S.undo=[];renderPart()}};
  $('#pw').onclick=e=>{if(S.tool!=='read'||ZM.pinched)return;if(S.marking){addMark(e);return}const r=e.currentTarget.getBoundingClientRect();const x=(e.clientX-r.left)/r.width;if(x>=.18&&x<=.82){const t=Date.now();if(t-ZM.tap<320){ZM.tap=0;setZoom(S.zoom<150?200:100,e.clientX,e.clientY)}else ZM.tap=t;return}const {ci,ix}=cultoNb(n);if(x<.18){if(S.pg>0)goP();else if(S.hide&&ix>0)goPiece(ci[ix-1])}else if(x>.82){if(S.pg<N-1)goN();else if(S.hide&&ix>=0&&ix<ci.length-1)goPiece(ci[ix+1])}};
- if(S.hide){$('#fFs').onclick=fsToggle;$('#fMet').onclick=()=>togglePanel('met');$('#fP').onclick=goP;$('#fN').onclick=goN;$('#fShow').onclick=()=>{S.hide=false;setPrefHide(false);renderPart()};$('#fMk').onclick=()=>marksMenu();{const {ci,ix}=cultoNb(n);const fnx=$('#fNext'),fpv=$('#fPrev');if(fnx)fnx.onclick=()=>goPiece(ci[ix+1]);if(fpv)fpv.onclick=()=>goPiece(ci[ix-1])};return mountPage()}
- $('#hideT').onclick=()=>{S.hide=true;setPrefHide(true);renderPart()};$('#mkA').onclick=()=>{S.marking=!S.marking;S.tool='read';if(S.marking)toast('Toque no ponto da partitura que quer marcar');renderPart()};$('#mkL').onclick=()=>marksMenu();
+ if(S.hide){$('#fFs').onclick=fsToggle;$('#fMet').onclick=()=>togglePanel('met');$('#fP').onclick=goP;$('#fN').onclick=goN;$('#fShow').onclick=()=>{S.hide=false;setPrefHide(false);renderPart()};$('#fMk').onclick=()=>marksMenu();$('#fOuv').onclick=ouvir;{const {ci,ix}=cultoNb(n);const fnx=$('#fNext'),fpv=$('#fPrev');if(fnx)fnx.onclick=()=>goPiece(ci[ix+1]);if(fpv)fpv.onclick=()=>goPiece(ci[ix-1])};return mountPage()}
+ $('#hideT').onclick=()=>{S.hide=true;setPrefHide(true);renderPart()};$('#mkA').onclick=()=>{S.marking=!S.marking;S.tool='read';if(S.marking)toast('Toque no ponto da partitura que quer marcar');renderPart()};$('#mkL').onclick=()=>marksMenu();$('#bOuv').onclick=ouvir;
  $('#wk').onclick=()=>{WAKE=!WAKE;if(WAKE){WLmsg=false;wake();toast('Tela ficará acesa durante a leitura')}else{unwake();toast('Tela acesa desligada')}renderPart()};
  p.querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{S.preset=b.dataset.pre||null;renderPart()});
  $('#pP').onclick=goP;$('#pN').onclick=goN;
@@ -424,7 +424,7 @@ function parseMusicXML(xml){const doc=new DOMParser().parseFromString(xml,'text/
      else{const o={t:st*60/bpm,d:dur*60/bpm,m,v:.8};ev.push(o);if(ties.includes('start'))tied[m]=o}}
     if(!chord)cur+=dur}})})});
  ev.sort((a,b)=>a.t-b.t);ev.keys=kx;return ev}
-function abcToEvents(abc){const r=ABC.synth.getMidiFile(abc,{midiOutputType:'binary'});let a=Array.isArray(r)?r[0]:r;if(a instanceof ArrayBuffer)a=new Uint8Array(a);else if(Array.isArray(a))a=new Uint8Array(a);if(!a||!a.length)throw new Error('ABC sem notas');const ev=parseMidi(a);const ks=abcKeys(abc);if(ks.length)ev.keys=ks;return ev}
+function abcToEvents(abc){const r=ABC.synth.getMidiFile(abc,{midiOutputType:'binary'});let a=Array.isArray(r)?r[0]:r;if(a instanceof ArrayBuffer)a=new Uint8Array(a);else if(Array.isArray(a))a=new Uint8Array(a);if(!a||!a.length)throw new Error('ABC sem notas');const ev=parseMidi(a);const ks=abcKeys(abc);if(ks.length)ev.keys=ks;const tr=curTransp();if(tr){ev.forEach(e=>e.m+=tr);if(ev.keys)ev.keys=ev.keys.map(k=>({...k,pc:((k.pc+tr)%12+12)%12}))}return ev}
 
 /* ===== sintetizador WebAudio ===== */
 let AC=null,P={ev:[],playing:false,pos:0,rate:1,timbre:'piano',idx:0,t0:0,p0:0,timer:null,raf:0,end:0,pedMode:'off',pedNote:-1,keys:[],pd:[],pidx:0,pn:[]};
@@ -463,14 +463,15 @@ async function loadFromScore(){const n=S.n;try{if(n.abc&&n.abc.trim())await need
  }catch(e){console.error(e);setEvents([]);msg('Não consegui ler a música: '+e.message,1);afterLoad()}
  setEvents([]);afterLoad()}
 function msg(t,err){const m=$('#smsg');if(m)m.innerHTML=t?`<div class="msg ${err?'err':''}">${esc(t)}</div>`:''}
-function afterLoad(){updTime();drawRoll();const pp=$('#paper');if(pp&&S.n.abc&&ABC){try{ABC.renderAbc('paper',S.n.abc,{responsive:'resize',add_classes:true})}catch(e){}}}
-function renderSom(box){const n=S.n;stopPlay();const canAbc=n.kind==='abc'||hasPages(n);
+function afterLoad(){updTime();drawRoll();if(S&&S.autoplay&&P.ev.length){S.autoplay=false;setTimeout(()=>{play();toast(trLabel())},150)}else if(S)S.autoplay=false;const pp=$('#paper');if(pp&&S.n.abc&&ABC){try{ABC.renderAbc('paper',S.n.abc,{responsive:'resize',add_classes:true})}catch(e){}}}
+function renderSom(box){const n=S.n;stopPlay();const canAbc=n.kind==='abc'||hasPages(n);if(hasPages(n))n.abc=(n.abcPages||{})[S.pg]||'';
  box.innerHTML=`<div id="smsg"></div>
- ${hasPages(n)?`<div class="msg">Para tocar a partitura de uma foto/PDF, o Claude lê a imagem e a transcreve em notação ABC. É aproximado: confira e corrija o texto abaixo. Funciona melhor com uma página nítida, de frente e bem iluminada.</div><div class="tools"><button class="btn pri" id="bOcr">🎼 Transcrever página ${S.pg+1} com IA</button></div>`:''}
+ ${hasPages(n)?`<div class="msg">Para tocar a partitura de uma foto/PDF, o Claude lê a imagem e a transcreve em notação ABC. É aproximado: confira e corrija o texto abaixo. Funciona melhor com uma página nítida, de frente e bem iluminada.</div><div class="tools"><button class="btn pri" id="bOcr">🎼 Transcrever página ${S.pg+1} com IA</button><button class="btn" id="bKey">🔑 Chave da IA${aiKey()?' ✓':''}</button></div>`:''}
  ${n.kind==='musicxml'?'<div class="msg">MusicXML importado. A reprodução usa as notas do arquivo (sem renderizar a pauta).</div>':''}
  ${n.kind==='midi'?'<div class="msg">MIDI importado. Reprodução e piano-roll abaixo.</div>':''}
  <div class="player"><button class="btn pri" id="bPlay">▶ Tocar</button><button class="btn" id="bStop">⏹ Parar</button><input type="range" id="seek" min="0" max="1000" value="0" style="flex:1;min-width:120px"><span class="mono" id="tm">0:00 / 0:00</span>
  <label class="mono">Tempo <select id="rate" class="fld" style="width:auto"><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option></select></label>
+ <label class="mono">Instrumento <select id="trsp" class="fld" style="width:auto"><option value="auto">Automático (pelo nome da parte)</option><option value="0">Em Dó (como está escrito)</option><option value="-9">Sax alto / barítono em Mi♭ → som real</option><option value="-2">Trompete / clarinete em Si♭ → som real</option><option value="-14">Sax tenor em Si♭ → som real</option><option value="-7">Trompa em Fá → som real</option></select></label>
  <label class="mono">Timbre <select id="timb" class="fld" style="width:auto"><option value="piano">Piano</option><option value="sax">Sax</option><option value="orgao">Órgão</option><option value="suave">Suave</option></select></label>
  <label class="mono">Pedal <select id="ped" class="fld" style="width:auto"><option value="off">Desligado</option><option value="t">Tônica</option><option value="q">Tônica + 5ª</option></select></label>
  <label class="mono">Nota do pedal <select id="pednote" class="fld" style="width:auto"><option value="-1">Automática (tom da peça)</option>${NN.map((x,i)=>`<option value="${i}">${x}</option>`).join('')}</select></label></div>
@@ -480,25 +481,54 @@ function renderSom(box){const n=S.n;stopPlay();const canAbc=n.kind==='abc'||hasP
  $('#seek').oninput=e=>seek(e.target.value/1000*P.end);
  $('#rate').onchange=e=>{const was=P.playing;if(was)pausePlay();P.rate=+e.target.value;if(was)play()};$('#rate').value=String(P.rate);
  $('#timb').onchange=e=>{P.timbre=e.target.value;PREF.timbre=P.timbre;savePref()};$('#timb').value=P.timbre;
+ $('#trsp').value=PREF.trsp||'auto';$('#trsp').onchange=e=>{PREF.trsp=e.target.value;savePref();stopPlay();loadFromScore();toast(trLabel())};
  const chPed=fn=>{const was=P.playing;if(was)pausePlay();fn();buildPed();savePref();if(was)play()};
  $('#ped').value=P.pedMode;$('#ped').onchange=e=>chPed(()=>{P.pedMode=PREF.pedMode=e.target.value});
  $('#pednote').value=String(P.pedNote);$('#pednote').onchange=e=>chPed(()=>{P.pedNote=PREF.pedNote=+e.target.value});
  $('#roll').onclick=e=>{const r=e.target.getBoundingClientRect();seek((e.clientX-r.left)/r.width*P.end)};
- if(canAbc){$('#bApply').onclick=async()=>{try{await needAbc()}catch(e){return msg(e.message,1)}n.abc=$('#abcbox').value;dbPut(n);try{setEvents(abcToEvents(n.abc));msg('');afterLoad();play()}catch(e){msg('ABC inválido: '+e.message,1)}};$('#abcbox').oninput=e=>{n.abc=e.target.value;saveSoon()}}
- if(hasPages(n))$('#bOcr').onclick=transcribe;
+ if(canAbc){$('#bApply').onclick=async()=>{try{await needAbc()}catch(e){return msg(e.message,1)}n.abc=$('#abcbox').value;if(hasPages(n))(n.abcPages=n.abcPages||{})[S.pg]=n.abc;dbPut(n);try{setEvents(abcToEvents(n.abc));msg('');afterLoad();play()}catch(e){msg('ABC inválido: '+e.message,1)}};$('#abcbox').oninput=e=>{n.abc=e.target.value;if(hasPages(n))(n.abcPages=n.abcPages||{})[S.pg]=n.abc;saveSoon()}}
+ if(hasPages(n)){$('#bOcr').onclick=()=>{ensureAC();transcribe()};$('#bKey').onclick=keyDialog}
  loadFromScore()}
 
 /* ===== OCR musical via Claude (sample) ===== */
 async function pageBlob(){const n=S.n;if(n.kind==='image')return n.pages[S.pg];const pgd=await pdfDoc.getPage(S.pg+1);const vp0=pgd.getViewport({scale:1});const vp=pgd.getViewport({scale:Math.min(2,1600/vp0.width)});const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;await pgd.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;return cvBlob(c,.9)}
-async function transcribe(){const sample=window.claude?await claude.use('sample'):null;if(!sample)return msg('Transcrição por IA indisponível neste ambiente.',1);
- const lim=await sample.limits();if(!lim||!lim.images)return msg('Leitura de imagem indisponível neste ambiente.',1);
- const btn=$('#bOcr');btn.disabled=true;btn.textContent='Lendo a partitura…';msg('');
- try{const b=await pageBlob();
-  const r=await sample(`Você é um transcritor de partituras (OMR). Leia a imagem da partitura e transcreva-a em notação ABC (v2.1) completa e válida, para ser tocada. Regras: inclua os campos X:1, T: (título, se visível), M: (compasso), L:, Q: (andamento, se indicado ou estime), K: (armadura). Se houver várias pautas/vozes, use V:1, V:2 etc. com %%score se necessário. Preserve alturas, durações, pausas, ligaduras, acidentes, repetições e barras de compasso o melhor possível. Se algum trecho estiver ilegível, escreva o que for plausível e marque o ponto com um comentário %? . Responda SOMENTE com o código ABC, sem explicações e sem cercas de código.`,{images:[b],modelTier:'complex',cache:false});
-  let t=(r.text||'').replace(/```[a-z]*\n?/gi,'').trim();if(!/^X:/m.test(t)||!/^K:/m.test(t))throw new Error('A resposta não parece ABC válido. Tente de novo com uma foto mais nítida.');
-  S.n.abc=t;await dbPut(S.n);renderSom($('#pane'));msg('Transcrição pronta. Revise o ABC e toque em “Aplicar e ouvir” se editar.')}
- catch(e){const c=e&&e.code;msg(c==='not_granted'?'Permissão negada para usar a IA.':c==='rate_limited'?'Limite de uso atingido. Tente em alguns minutos.':c==='image_rejected'?'A imagem foi recusada. Tente outra foto.':(e&&e.message)||'Falha na transcrição',1);btn.disabled=false;btn.textContent='🎼 Transcrever página '+(S.pg+1)+' com IA'}}
-
+const OMR_PROMPT=`Você é um transcritor de partituras (OMR). Leia a imagem da partitura e transcreva-a em notação ABC (v2.1) completa e válida, para ser tocada. Regras: inclua os campos X:1, T: (título, se visível), M: (compasso), L:, Q: (andamento, se indicado ou estime), K: (armadura). Transcreva exatamente como está ESCRITO na pauta (não transponha). Se houver várias pautas/vozes, use V:1, V:2 etc. Preserve alturas, durações, pausas, ligaduras, acidentes, repetições, casas de 1ª/2ª vez e barras de compasso o melhor possível. Pausas de vários compassos: use Z com o número (ex.: Z8). Se algum trecho estiver ilegível, escreva o que for plausível e marque o ponto com um comentário %? . Responda SOMENTE com o código ABC, sem explicações e sem cercas de código.`;
+function aiKey(){try{return localStorage.getItem('jscore-apikey')||''}catch(e){return ''}}
+function keyDialog(){modal(`<h3>Chave da IA (Claude)</h3><p class="mute" style="margin:0 0 8px">Para ler a partitura e tocar fora do Claude, o Jscore usa a sua chave da API da Anthropic (crie em console.anthropic.com → API Keys). Ela fica guardada só neste aparelho. Cada página lida custa poucos centavos e o resultado fica salvo para tocar de novo sem custo.</p><input type="password" id="mk" autocomplete="off" placeholder="sk-ant-..." value=""><div class="acts">${aiKey()?'<button class="btn dng" id="mdel">Remover chave</button>':''}<button class="btn" id="mc">Cancelar</button><button class="btn pri" id="mo">Salvar</button></div>`,d=>{
+ $('#mc',d).onclick=closeModal;const del=$('#mdel',d);if(del)del.onclick=()=>{try{localStorage.removeItem('jscore-apikey')}catch(e){}closeModal();toast('Chave removida');if(S&&S.tab==='som')renderSom($('#pane'))};
+ $('#mo',d).onclick=()=>{const v=$('#mk',d).value.trim();if(!/^sk-ant-/.test(v))return toast('A chave começa com sk-ant-');try{localStorage.setItem('jscore-apikey',v)}catch(e){}closeModal();toast('Chave salva neste aparelho');if(S&&S.tab==='som')renderSom($('#pane'))}})}
+const b64=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(b)});
+async function aiRead(blob){
+ const sample=window.claude?await claude.use('sample').catch(()=>null):null;
+ if(sample){const lim=await sample.limits();if(lim&&lim.images){const r=await sample(OMR_PROMPT,{images:[blob],modelTier:'complex',cache:false});return r.text||''}}
+ const key=aiKey();if(!key){const e=new Error('Configure a chave da IA (🔑) para ler partituras neste aparelho.');e.code='nokey';throw e}
+ if(!navigator.onLine)throw new Error('Sem internet. A primeira leitura de cada página precisa de internet.');
+ const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+  body:JSON.stringify({model:'claude-sonnet-5',max_tokens:8000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:blob.type||'image/jpeg',data:await b64(blob)}},{type:'text',text:OMR_PROMPT}]}]})});
+ const j=await r.json().catch(()=>({}));
+ if(!r.ok){const m=(j.error&&j.error.message)||('erro '+r.status);throw new Error(r.status===401?'Chave da IA inválida. Confira em 🔑.':r.status===429?'Limite de uso atingido. Tente em alguns minutos.':r.status===402||/credit/i.test(m)?'Sem créditos na conta da API.':m)}
+ return (j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n')}
+async function readPage(pg){const n=S.n;const keep=S.pg;S.pg=pg;let b;try{b=await pageBlob()}finally{S.pg=keep}
+ let t=(await aiRead(b)).replace(/```[a-z]*\n?/gi,'').trim();if(!/^X:/m.test(t)||!/^K:/m.test(t))throw new Error('A leitura não saiu em ABC válido. Tente de novo ou use uma foto mais nítida.');
+ (n.abcPages=n.abcPages||{})[pg]=t;await dbPut(n);return t}
+async function transcribe(){const btn=$('#bOcr');if(btn){btn.disabled=true;btn.textContent='Lendo a partitura…'}msg('');
+ try{await readPage(S.pg);S.autoplay=true;renderSom($('#pane'));msg('Pronto! Se alguma nota soar errada, corrija o ABC abaixo e toque em “Aplicar e ouvir”.')}
+ catch(e){const c=e&&e.code;msg(c==='not_granted'?'Permissão negada para usar a IA.':c==='rate_limited'?'Limite de uso atingido. Tente em alguns minutos.':c==='image_rejected'?'A imagem foi recusada. Tente outra foto.':(e&&e.message)||'Falha na transcrição',1);if(c==='nokey')keyDialog();if(btn){btn.disabled=false;btn.textContent='🎼 Transcrever página '+(S.pg+1)+' com IA'}}}
+/* ▶ Ouvir: da partitura direto para o som (lê com IA na 1ª vez, depois toca na hora) */
+async function ouvir(){const n=S.n;if(!hasPages(n))return;ensureAC();if(AC&&AC.state==='suspended')AC.resume();
+ if(!(n.abcPages||{})[S.pg]){if(ZM.reading)return;ZM.reading=true;toast('🎼 Lendo a página '+(S.pg+1)+'… (uns 20 a 40 segundos)');
+  try{await readPage(S.pg)}catch(e){ZM.reading=false;toast((e&&e.message)||'Não consegui ler a página');if(e&&e.code==='nokey')keyDialog();return}ZM.reading=false}
+ if(!PREF.timbre&&/\b(alto|tenor|bar[ií]tono)\b/i.test(partName()))P.timbre='sax';S.autoplay=true;S.tab='som';renderViewer()}
+/* transposição: pelo nome da parte (Alto, Tenor, Trompete…) ou escolha manual */
+function partName(){const n=S&&S.n;return n?((n.partNames||{})[S.pg]||''):''}
+function curTransp(){const v=PREF.trsp||'auto';if(v!=='auto')return +v;const t=partName();
+ if(/sax(ofone)?\s*bar|bar[ií]tono/i.test(t)||/\balto\b/i.test(t))return -9;if(/tenor/i.test(t))return -14;if(/trompete|trumpet|clarinet|clarone|flugel/i.test(t))return -2;if(/trompa|horn/i.test(t))return -7;return 0}
+function trLabel(){const tr=curTransp(),nm=partName();return (nm?'Parte: '+nm+' · ':'')+(tr===0?'tocando como está escrito':'tocando no som real ('+(tr>0?'+':'')+tr+' semitons)')}
+async function detectParts(){const n=S.n;if(n.kind!=='pdf'||!pdfDoc||n.partNames)return;const out={};
+ const RX=/\b(sax(ofone)?\s*(alto|tenor|bar[ií]tono)|alto|tenor|bar[ií]tono|flauta|clarinete|trompete[s]?(\s*\d)?|trombone[s]?(\s*\d)?|trompa(\s*f)?|tuba|violino|viola|violoncelo|cello|baixo|piano|teclado|guitarra|bateria|voz|soprano)\b/i;
+ for(let i=0;i<pdfDoc.numPages;i++){try{const tc=await (await pdfDoc.getPage(i+1)).getTextContent();const items=tc.items.map(x=>x.str).filter(x=>x&&x.trim());const hit=items.find(x=>RX.test(x)&&x.length<40);if(hit)out[i]=hit.trim()}catch(e){}}
+ n.partNames=out;await dbPut(n)}
+function myPartPage(){const pn=S.n.partNames||{};for(const k of Object.keys(pn))if(/\balto\b/i.test(pn[k]))return +k;return -1}
 /* ===== preferências (timbre, pedal, metrônomo, afinador) ===== */
 let PREF={};try{PREF=JSON.parse(localStorage.getItem('jscore-pref')||'{}')||{}}catch(e){PREF={}}
 function savePref(){try{localStorage.setItem('jscore-pref',JSON.stringify(PREF))}catch(e){}}

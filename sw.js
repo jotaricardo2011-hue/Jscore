@@ -1,4 +1,4 @@
-const V="jscore-shell-v5",L="jscore-libs";
+const V="jscore-shell-v6",L="jscore-libs";
 const SHELL=["./","index.html","manifest.webmanifest","icon-192.png","icon-512.png"];
 /* bibliotecas externas baixadas já na instalação, para PDF, ABC e fontes funcionarem sem internet */
 const LIBS=["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js","https://cdnjs.cloudflare.com/ajax/libs/abcjs/6.4.4/abcjs-basic-min.js"];

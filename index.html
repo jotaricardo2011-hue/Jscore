@@ -506,11 +506,22 @@ async function aiRead(blob){
  if(sample){const lim=await sample.limits();if(lim&&lim.images){const r=await sample(OMR_PROMPT,{images:[blob],modelTier:'complex',cache:false});return r.text||''}}
  const key=aiKey();if(!key){const e=new Error('Configure a chave da IA (🔑) para ler partituras neste aparelho.');e.code='nokey';throw e}
  if(!navigator.onLine)throw new Error('Sem internet. A primeira leitura de cada página precisa de internet.');
- const ctl=new AbortController(),tmo=setTimeout(()=>ctl.abort(),180000);let r;try{r=await fetch('https://api.anthropic.com/v1/messages',{signal:ctl.signal,method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-  body:JSON.stringify({model:'claude-sonnet-5',max_tokens:16000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:blob.type||'image/jpeg',data:await b64(blob)}},{type:'text',text:OMR_PROMPT}]}]})})}catch(e){clearTimeout(tmo);if(e&&e.name==='AbortError')throw new Error('A leitura passou de 3 minutos e foi cancelada. Confira a internet e tente de novo.');throw new Error('Sem conexão com a IA ('+(e&&e.message||e)+'). Confira a internet.')}
- const j=await r.json().catch(()=>({}));clearTimeout(tmo);
- if(!r.ok){const m=(j.error&&j.error.message)||('erro '+r.status);throw new Error(r.status===401?'Chave da IA inválida. Confira em 🔑.':r.status===429?'Limite de uso atingido. Tente em alguns minutos.':r.status===402||/credit/i.test(m)?'Sem créditos na conta da API.':m)}
- return (j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n')}
+ /* resposta em fluxo: o texto chega aos poucos; só cancela se ficar 90 s sem receber nada */
+ const ctl=new AbortController();let idle=null;const kick=()=>{clearTimeout(idle);idle=setTimeout(()=>ctl.abort(),90000)};kick();
+ let r;try{r=await fetch('https://api.anthropic.com/v1/messages',{signal:ctl.signal,method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+  body:JSON.stringify({model:'claude-sonnet-5',max_tokens:16000,stream:true,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:blob.type||'image/jpeg',data:await b64(blob)}},{type:'text',text:OMR_PROMPT}]}]})})}
+ catch(e){clearTimeout(idle);if(e&&e.name==='AbortError')throw new Error('A IA não respondeu. Confira a internet e tente de novo.');throw new Error('Sem conexão com a IA ('+(e&&e.message||e)+'). Confira a internet.')}
+ if(!r.ok){clearTimeout(idle);const j=await r.json().catch(()=>({}));const m=(j.error&&j.error.message)||('erro '+r.status);
+  throw new Error(r.status===401?'Chave da IA inválida. Confira em 🔑.':r.status===429?'Limite de uso atingido. Tente em alguns minutos.':r.status===529||/overloaded/i.test(m)?'A IA está sobrecarregada agora. Tente de novo em alguns minutos.':r.status===402||/credit/i.test(m)?'Sem créditos na conta da API.':m)}
+ const rd=r.body.getReader(),dec=new TextDecoder();let buf='',out='',stop='';
+ try{for(;;){const {done,value}=await rd.read();if(done)break;kick();buf+=dec.decode(value,{stream:true});let i;
+  while((i=buf.indexOf('\n\n'))>=0){const blk=buf.slice(0,i);buf=buf.slice(i+2);const dl=blk.split('\n').find(l=>l.startsWith('data:'));if(!dl)continue;let ev;try{ev=JSON.parse(dl.slice(5))}catch(e){continue}
+   if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.type==='text_delta'){out+=ev.delta.text;ZM.prog=(out.match(/\|/g)||[]).length}
+   else if(ev.type==='message_delta'&&ev.delta)stop=ev.delta.stop_reason||stop;
+   else if(ev.type==='error')throw new Error((ev.error&&ev.error.message)||'Erro da IA')}}}
+ catch(e){if(e&&e.name==='AbortError')throw new Error('A IA parou de responder no meio da leitura. Tente de novo.');throw e}finally{clearTimeout(idle)}
+ if(stop==='max_tokens')toast('A página é longa: a leitura pode ter ficado incompleta no final.');
+ return out}
 /* andamento: lê/ajusta o Q: do ABC (pulsação certa em 6/8 etc.) */
 const isCompound=m=>/^(6|9|12)\/8$/.test((m||'').trim());
 function abcMeter(abc){const m=/^M:\s*([^\n%]+)/m.exec(abc||'');return m?m[1].trim():''}
@@ -531,14 +542,14 @@ async function transcribe(){const btn=$('#bOcr');if(btn){btn.disabled=true;btn.t
 /* ▶ Ouvir: da partitura direto para o som (lê com IA na 1ª vez, depois toca na hora) */
 function srcKey(){return S&&S.n?S.n.id+':'+(hasPages(S.n)?S.pg:'x'):''}
 function updOuv(){if(!S)return;const mine=P.src===srcKey()&&P.ev.length>0,cached=!!((S.n.abcPages||{})[S.pg]);
- const sec=ZM.reading?Math.round((Date.now()-ZM.rt)/1000):0;const b=$('#bOuv');if(b)b.textContent=ZM.reading?'⏳ Lendo… '+sec+'s':mine&&P.playing?'⏸ Pausar':mine&&P.pos>0?'▶ Continuar':cached?'▶ Ouvir':'▶ Ouvir (IA)';
+ const sec=ZM.reading?Math.round((Date.now()-ZM.rt)/1000):0;const b=$('#bOuv');if(b)b.textContent=ZM.reading?'⏳ Lendo… '+sec+'s'+(ZM.prog?' · '+ZM.prog+' compassos':''):mine&&P.playing?'⏸ Pausar':mine&&P.pos>0?'▶ Continuar':cached?'▶ Ouvir':'▶ Ouvir (IA)';
  const f=$('#fOuv');if(f)f.textContent=ZM.reading?'⏳':mine&&P.playing?'⏸':'▶';
  const show=mine&&(P.playing||P.pos>0);['#bOuvS','#fOuvS'].forEach(id=>{const e=$(id);if(e)e.hidden=!show});
  const t=$('#ouvT');if(t)t.textContent=show?fmt(posNow())+' / '+fmt(P.end):'';
  clearTimeout(ZM.ot);if((mine&&P.playing)||ZM.reading)ZM.ot=setTimeout(updOuv,500)}
 async function ouvir(){const n=S.n;if(!hasPages(n))return;ensureAC();if(AC&&AC.state==='suspended')AC.resume();
  if(P.src===srcKey()&&P.ev.length){if(P.playing)pausePlay();else play();return updOuv()}
- if(!(n.abcPages||{})[S.pg]){if(ZM.reading)return toast('Ainda lendo a página… aguarde');ZM.reading=true;ZM.rt=Date.now();updOuv();toast('🎼 Lendo a página '+(S.pg+1)+'… (uns 20 a 40 segundos)');
+ if(!(n.abcPages||{})[S.pg]){if(ZM.reading)return toast('Ainda lendo a página… aguarde');ZM.reading=true;ZM.rt=Date.now();ZM.prog=0;updOuv();toast('🎼 Lendo a página '+(S.pg+1)+'… (uns 20 a 40 segundos)');
   try{await readPage(S.pg)}catch(e){ZM.reading=false;updOuv();toast((e&&e.message)||'Não consegui ler a página');if(e&&e.code==='nokey')keyDialog();return}ZM.reading=false}
  if(!PREF.timbre&&/\b(alto|tenor|bar[ií]tono)\b/i.test(partName()))P.timbre='sax';
  stopPlay();n.abc=n.abcPages[S.pg];if(!abcTempo(n.abc).has){n.abc=fixAbc(n.abc);n.abcPages[S.pg]=n.abc}

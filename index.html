@@ -58,8 +58,15 @@ main{background:var(--panel);border:1px solid var(--line);border-radius:14px;ove
 .chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px}.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .srch{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);color:var(--ink);font:inherit}
 #main.focus .pane{padding:8px 8px 12px}
-.fab{position:fixed;top:10px;right:14px;z-index:30;display:flex;gap:4px;align-items:center;background:color-mix(in srgb,var(--card) 92%,transparent);border:1px solid var(--line);border-radius:12px;padding:4px 6px;box-shadow:var(--shadow)}
+.fab{position:fixed;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));z-index:30;display:flex;gap:4px;align-items:center;justify-content:center;flex-wrap:wrap;background:color-mix(in srgb,var(--card) 94%,transparent);border:1px solid var(--line);border-radius:12px;padding:4px 6px;box-shadow:var(--shadow)}
 .fab .btn{padding:5px 10px}
+/* barra de ferramentas: no rodapé por padrão; arraste pela alça ⠿ para qualquer lugar (toque duplo na alça volta ao rodapé) */
+#bars{position:fixed;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));z-index:30;max-height:46vh;overflow:auto;background:color-mix(in srgb,var(--card) 96%,transparent);border:1px solid var(--line);border-radius:12px;padding:6px 8px;box-shadow:var(--shadow)}
+#bars .pgs{margin-bottom:6px;gap:6px}#bars .tools{margin-bottom:2px;gap:5px}
+#bars .btn{padding:5px 9px;font-size:13px}#bars .sw{width:22px;height:22px}#bars .grip{padding:2px 9px}
+#bars.moved,.fab.moved{right:auto;bottom:auto;max-width:min(920px,calc(100vw - 16px));width:max-content}
+.grip{border:1px dashed var(--line);background:var(--bg);border-radius:9px;padding:4px 10px;font-size:18px;line-height:1.2;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;color:var(--mute)}
+.grip:active{cursor:grabbing;border-color:var(--accent);color:var(--accent)}
 .tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .sw{width:24px;height:24px;border-radius:50%;border:2px solid var(--card);outline:1px solid var(--line);padding:0}
 .sw.on{outline:2px solid var(--accent)}
@@ -72,6 +79,20 @@ main{background:var(--panel);border:1px solid var(--line);border-radius:14px;ove
 .pgs{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
 .mono{font-family:"IBM Plex Mono",monospace;font-size:13px}
 .mute{color:var(--mute)}
+/* aba Violão: cifra sobre a letra + quadro de acordes */
+.vcif{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow:auto;margin-top:6px}
+.vct{font:400 26px/1.15 "Instrument Serif",Georgia,serif;margin-bottom:4px}
+.vcm{font-size:.82em;color:var(--mute);margin-bottom:12px;display:flex;flex-direction:column;gap:1px}.vcm b{color:var(--ink)}
+.vcl{white-space:pre-wrap;line-height:1.3;min-height:1.2em}.vcl.vbr{min-height:.7em}
+.vsg{display:inline-flex;flex-direction:column;vertical-align:bottom}
+.vch{color:var(--accent);font-weight:700;font-size:.92em;line-height:1.35;min-height:1.35em;padding-right:.45em;white-space:pre}
+.vco .vch{padding-right:1.2em}
+.vly{white-space:pre-wrap}.vly u{text-decoration-thickness:1.5px;text-underline-offset:2px}
+.vbxs{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.vbx{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:6px 8px 2px;text-align:center;min-width:84px}
+.vbn{font-weight:700;margin-bottom:2px}
+.vbx svg .vdt{fill:currentColor;stroke:none}.vbx svg .vxm,.vbx svg .vfl{fill:currentColor;stroke:none}.vxm{font:12px sans-serif}.vfl{font:10px "IBM Plex Mono",monospace}
+.vtools label{display:inline-flex;gap:6px;align-items:center}.vtools .fld{width:auto}
 #abcbox{width:100%;min-height:150px;font-family:"IBM Plex Mono",monospace;font-size:13px}
 #paper{background:#fff;border-radius:10px;padding:8px;overflow:auto;color:#111}
 canvas.roll{width:100%;height:150px;background:var(--bg);border:1px solid var(--line);border-radius:10px;display:block}
@@ -79,7 +100,7 @@ canvas.roll{width:100%;height:150px;background:var(--bg);border:1px solid var(--
 .msg{padding:8px 12px;border-radius:9px;background:color-mix(in srgb,var(--accent) 12%,transparent);margin:8px 0;font-size:14px}
 .msg.err{background:color-mix(in srgb,var(--mark) 14%,transparent)}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;z-index:99;display:none}
-#pnls{position:fixed;right:12px;bottom:12px;z-index:60;display:flex;flex-direction:column;gap:8px;width:min(340px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
+#pnls{position:fixed;right:12px;bottom:calc(12px + var(--barH,0px));z-index:60;display:flex;flex-direction:column;gap:8px;width:min(340px,calc(100vw - 24px));max-height:calc(100dvh - 24px - var(--barH,0px));overflow:auto}
 .pnl{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px}
 .pnl.min .pb{display:none}.pnl.min .ph{margin-bottom:0}
 .ph{display:flex;align-items:center;gap:6px;margin-bottom:8px}.ph h3{flex:1;font-size:22px}.ph .btn{padding:4px 10px}
@@ -287,10 +308,10 @@ async function openScore(id){sideHide();stopPlay&&stopPlay();viewing=id;pdfDoc=n
  const v0=loadView(id);S={n,tab:hasPages(n)?'part':'som',pg:Math.max(0,Math.min(v0.pg||0,(n.kind==='pdf'?(n.nPages||1):(n.pages||[]).length||1)-1)),tool:'read',color:COLORS[0],w:3,zoom:v0.zoom||100,undo:[],hide:KEEPHIDE||prefHide(),restore:v0.pg!=null?v0:null};wake();
  if(n.kind==='pdf'){try{pdfDoc=await (await needPdf()).getDocument({data:await n.pdf.arrayBuffer()}).promise;await detectParts();if(v0.pg==null){const mp=myPartPage();if(mp>0){S.pg=mp;toast('Abrindo na sua parte: '+n.partNames[mp])}}}catch(e){toast('Não consegui abrir o PDF')}}
  renderViewer()}
-function closeScore(){stopPlay&&stopPlay();clearTimeout(saveT);dbPut(S.n);unwake();viewing=null;S=null;reload().then(render)}
-function renderViewer(){const n=S.n,m=$('#main');m.classList.remove('focus');
+function closeScore(){stopPlay&&stopPlay();clearTimeout(saveT);dbPut(S.n);unwake();viewing=null;S=null;document.documentElement.style.setProperty('--barH','0px');reload().then(render)}
+function renderViewer(){const n=S.n,m=$('#main');m.classList.remove('focus');document.documentElement.style.setProperty('--barH','0px');
  m.innerHTML=`<div class="top"><button class="btn mb" id="bMenu">☰</button><button class="btn" id="vHome" title="Início">🏠</button><button class="btn" id="vBack">← Voltar</button><div class="crumbs"><a id="vName" title="Renomear">${esc(n.name)}</a></div>${(()=>{const {ci,ix}=cultoNb(n);return `<button class="btn ${ix>=0?'on':''}" id="vCul">${ix>=0?'🎷 No Culto':'＋ Culto'}</button>`+(ix>=0&&ci.length>1?`<button class="btn" id="vPrev" ${ix>0?'':'disabled'}>⏮</button><button class="btn" id="vNext" ${ix<ci.length-1?'':'disabled'}>Próxima ⏭</button>`:'')})()}<button class="btn" id="vMet" title="Metrônomo">🥁</button><button class="btn" id="vTun" title="Afinador">🎯</button><button class="btn" id="vFs" title="Tela cheia">⛶</button><button class="btn" id="vMore">⋯</button></div>
- <div class="tabs">${hasPages(n)?`<button class="tab ${S.tab==='part'?'on':''}" data-t="part">Partitura</button>`:''}<button class="tab ${S.tab==='som'?'on':''}" data-t="som">Som</button><button class="tab ${S.tab==='nt'?'on':''}" data-t="nt">Notas</button></div><div class="pane" id="pane"></div>`;
+ <div class="tabs">${hasPages(n)?`<button class="tab ${S.tab==='part'?'on':''}" data-t="part">Partitura</button>`:''}<button class="tab ${S.tab==='som'?'on':''}" data-t="som">Som</button><button class="tab ${S.tab==='vi'?'on':''}" data-t="vi">🎸 Violão</button><button class="tab ${S.tab==='nt'?'on':''}" data-t="nt">Notas</button></div><div class="pane" id="pane"></div>`;
  $('#bMenu').onclick=()=>sideToggle();
  $('#vFs').onclick=fsToggle;$('#vBack').onclick=closeScore;$('#vHome').onclick=goHome;$('#vMet').onclick=()=>togglePanel('met');$('#vTun').onclick=()=>togglePanel('tun');
  $('#vCul').onclick=async()=>{await toggleCulto(n.id);renderViewer()};
@@ -298,21 +319,100 @@ function renderViewer(){const n=S.n,m=$('#main');m.classList.remove('focus');
  $('#vName').onclick=async()=>{const v=await ask('Renomear',n.name,'Salvar');if(v){n.name=v;await dbPut(n);renderViewer()}};
  $('#vMore').onclick=async()=>{await nodeMenu(n);if(!byId(n.id)){viewing=null;S=null;render()}else renderViewer()};
  m.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{S.tab=t.dataset.t;renderViewer()});
- if(S.tab==='part')renderPart();else if(S.tab==='som')renderSom($('#pane'));else renderNotes()}
+ if(S.tab==='part')renderPart();else if(S.tab==='som')renderSom($('#pane'));else if(S.tab==='vi')renderVi();else renderNotes()}
+/* ===== violão: cifra sobre a letra + acordes desenhados por código ===== */
+const NOTES_S=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],NOTES_F=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'],NPC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+const pcOf=x=>((NPC[x[0]]+(x[1]==='#'?1:x[1]==='b'?-1:0))%12+12)%12;
+const chordTok=t=>/^[A-G][#b]?(?:m|min|maj|M|dim|aug|sus|add|[+°ºø\-Δ]|\d+|[#b]|\(|\))*(?:\/[A-G][#b]?)?$/.test(t);
+const isChordLine=s=>s.trim()!==''&&s.trim().split(/\s+/).every(chordTok);
+/* aceita [D]letra com [A7]acorde no meio  OU  linha de acordes em cima da linha da letra (como nos sites de cifra) */
+function parseCifra(txt){const L=String(txt||'').replace(/\r/g,'').split('\n'),out=[];
+ for(let i=0;i<L.length;i++){const s=L[i];
+  if(s.includes('[')){const ch=[];let tx='',last=0,m;const re=/\[([^\]]+)\]/g;while((m=re.exec(s))){tx+=s.slice(last,m.index);if(chordTok(m[1].trim()))ch.push({p:tx.length,c:m[1].trim()});else tx+=m[0];last=re.lastIndex}tx+=s.slice(last);out.push({t:tx,ch});continue}
+  if(isChordLine(s)){const ch=[],re=/\S+/g;let m;while((m=re.exec(s)))ch.push({p:m.index,c:m[0]});const nx=L[i+1];
+   if(nx!==undefined&&nx.trim()!==''&&!isChordLine(nx)&&!nx.includes('[')){out.push({t:nx,ch});i++}else out.push({t:'',ch});continue}
+  out.push({t:s,ch:[]})}
+ return out}
+function keyOf(c){let t=(c.tom||'').trim();if(!t){for(const o of parseCifra(c.text))if(o.ch.length){t=o.ch[0].c;break}}const m=t.match(/^([A-G][#b]?)(m(?!aj)|min|-)?/);return m?{pc:pcOf(m[1]),min:!!m[2]}:null}
+const useFlat=(key,k)=>!!key&&(key.min?[2,7,0,5,10,3]:[5,10,3,8,1,6]).includes((key.pc+k+120)%12);
+function trChord(c,k,fl){if(!k)return c;const m=c.match(/^([A-G][#b]?)(.*?)(?:\/([A-G][#b]?))?$/);if(!m)return c;const nm=fl?NOTES_F:NOTES_S,f=x=>nm[(pcOf(x)+k+120)%12];return f(m[1])+m[2]+(m[3]?'/'+f(m[3]):'')}
+/* formas: [E A D G B e], null = não tocar, 0 = solta; as formas móveis são deslocadas pela casa da raiz */
+const OPEN={C:[null,3,2,0,1,0],Cmaj7:[null,3,2,0,0,0],C7:[null,3,2,3,1,0],Cadd9:[null,3,2,0,3,0],Csus4:[null,3,3,0,1,1],C6:[null,3,2,2,1,0],
+ D:[null,null,0,2,3,2],Dm:[null,null,0,2,3,1],D7:[null,null,0,2,1,2],Dm7:[null,null,0,2,1,1],Dmaj7:[null,null,0,2,2,2],Dsus4:[null,null,0,2,3,3],Dsus2:[null,null,0,2,3,0],D6:[null,null,0,2,0,2],Dm6:[null,null,0,2,0,1],
+ G:[3,2,0,0,0,3],G7:[3,2,0,0,0,1],Gmaj7:[3,2,0,0,0,2],Gsus4:[3,3,0,0,1,3],G6:[3,2,0,0,0,0],Gadd9:[3,2,0,2,0,3]};
+const X=null,FORMS=[
+ {o:4,t:{'':[0,2,2,1,0,0],m:[0,2,2,0,0,0],7:[0,2,0,1,0,0],m7:[0,2,0,0,0,0],maj7:[0,2,1,1,0,0],sus4:[0,2,2,2,0,0],6:[0,2,2,1,2,0],m6:[0,2,2,0,2,0],9:[0,2,0,1,0,2],m9:[0,2,0,0,0,2],add9:[0,2,2,1,0,2],m7b5:[0,1,0,0,X,X],5:[0,2,2,X,X,X],'7sus4':[0,2,0,2,0,0]}},
+ {o:9,t:{'':[X,0,2,2,2,0],m:[X,0,2,2,1,0],7:[X,0,2,0,2,0],m7:[X,0,2,0,1,0],maj7:[X,0,2,1,2,0],sus4:[X,0,2,2,3,0],sus2:[X,0,2,2,0,0],6:[X,0,2,2,2,2],m6:[X,0,2,2,1,2],9:[X,0,-1,0,0,0],add9:[X,0,2,4,2,0],m7b5:[X,0,1,0,1,X],dim:[X,0,1,2,1,X],5:[X,0,2,2,X,X],'7sus4':[X,0,2,0,3,0],aug:[X,0,-1,-2,-2,-3]}},
+ {o:2,nob:1,t:{dim7:[X,X,0,1,0,1]}}];
+const QMAP={'':'',maj:'',M:'',m:'m',min:'m','-':'m',7:'7',m7:'m7',min7:'m7','-7':'m7',maj7:'maj7',M7:'maj7','7M':'maj7','Δ':'maj7','Δ7':'maj7',sus4:'sus4',sus:'sus4',sus2:'sus2','7sus4':'7sus4','7sus':'7sus4',6:'6',69:'6',m6:'m6',9:'9',m9:'m9',add9:'add9',2:'add9',5:'5',dim:'dim','°':'dim','º':'dim',dim7:'dim7','°7':'dim7','º7':'dim7',o7:'dim7',m7b5:'m7b5','m7-5':'m7b5','ø':'m7b5','ø7':'m7b5','+':'aug',aug:'aug'};
+function shapeFor(c){const m=String(c).replace('6/9','69').match(/^([A-G][#b]?)([^\/\s]*)(?:\/([A-G][#b]?))?$/);if(!m)return null;const q=QMAP[m[2].replace(/[()]/g,'')];if(q===undefined)return null;
+ if(OPEN[m[1]+q])return {fr:OPEN[m[1]+q],bar:null};
+ const root=pcOf(m[1]);let best=null;
+ for(const F of FORMS){const sh=F.t[q];if(!sh)continue;let f=(root-F.o+12)%12;const mn=Math.min(...sh.filter(v=>v!=null));if(f+mn<0)f+=12;if(!best||f<best.f)best={f,sh,F}}
+ if(!best)return null;const {f,sh,F}=best,fr=sh.map(v=>v==null?null:f+v);let bar=null;
+ if(f>0&&!F.nob&&Math.min(...sh.filter(v=>v!=null))>=0){const ix=sh.map((v,i)=>v===0?i:-1).filter(i=>i>=0);if(ix.length>=2)bar={f,a:ix[0],b:ix[ix.length-1]}}
+ return {fr,bar}}
+function chordSvg(c){const s=shapeFor(c),nm=`<div class="vbn">${esc(c)}</div>`;if(!s)return `<div class="vbx">${nm}<div class="mute" style="font-size:11px;padding:10px 0">sem diagrama</div></div>`;
+ const fr=s.fr,ps=fr.filter(v=>v>0),mx=ps.length?Math.max(...ps):1,mn=ps.length?Math.min(...ps):1,st=mx<=5?1:mn,x=i=>12+i*10,y=k=>24+k*12;let g='';
+ for(let i=0;i<6;i++)g+=`<line x1="${x(i)}" y1="${y(0)}" x2="${x(i)}" y2="${y(5)}"/>`;
+ for(let k=0;k<=5;k++)g+=`<line x1="${x(0)}" y1="${y(k)}" x2="${x(5)}" y2="${y(k)}"${k===0&&st===1?' stroke-width="3"':''}/>`;
+ fr.forEach((v,i)=>{if(v==null)g+=`<text x="${x(i)}" y="17" text-anchor="middle" class="vxm">×</text>`;else if(v===0)g+=`<circle cx="${x(i)}" cy="12" r="3.2"/>`;else if(!(s.bar&&v===s.bar.f&&i>=s.bar.a&&i<=s.bar.b))g+=`<circle cx="${x(i)}" cy="${y(v-st)+6}" r="4.2" class="vdt"/>`});
+ if(s.bar)g+=`<rect x="${x(s.bar.a)-4.5}" y="${y(s.bar.f-st)+1.5}" width="${x(s.bar.b)-x(s.bar.a)+9}" height="9" rx="4.5" class="vdt"/>`;
+ if(st>1)g+=`<text x="${x(5)+6}" y="${y(0)+11}" class="vfl">${st}fr</text>`;
+ return `<div class="vbx">${nm}<svg viewBox="0 0 84 94" width="84" height="94" fill="none" stroke="currentColor" stroke-width="1" aria-label="diagrama de ${esc(c)}">${g}</svg></div>`}
+function cifLine(o,k,fl){if(!o.ch.length)return `<div class="vcl${o.t.trim()?'':' vbr'}">${esc(o.t)||'&nbsp;'}</div>`;
+ const ch=o.ch.slice().sort((a,b)=>a.p-b.p),T=o.t;
+ const seg=(c,t)=>{const m=t.match(/^(\S*)([\s\S]*)$/);const ly=t===''?'&nbsp;':(c&&m[1]?'<u>'+esc(m[1])+'</u>':esc(m[1]))+esc(m[2]);return `<span class="vsg"><b class="vch">${c?esc(trChord(c,k,fl)):'&nbsp;'}</b><span class="vly">${ly}</span></span>`};
+ let h='';if(ch[0].p>0&&T.slice(0,ch[0].p)!=='')h+=seg('',T.slice(0,ch[0].p));
+ ch.forEach((c,i)=>h+=seg(c.c,T.slice(c.p,i+1<ch.length?ch[i+1].p:undefined)));
+ return `<div class="vcl${T.trim()?'':' vco'}">${h}</div>`}
+function renderVi(){const n=S.n,p=$('#pane'),c=n.cifra||{};
+ const set=(k,v)=>{(n.cifra=n.cifra||{})[k]=v;saveSoon()};
+ if(S.viEd||!(c.text||'').trim()){
+  p.innerHTML=`<p class="mute">Cole a cifra como está nos sites (acordes em cima da letra) ou escreva o acorde entre colchetes: <span class="mono">[D]A minha alma quer con[A7]templar-Te</span>. O quadro de acordes é montado sozinho.</p>
+  <div class="tools vtools"><label>Tom <input class="fld" id="ciT" size="4" value="${esc(c.tom||'')}" placeholder="D"></label><label>Compasso <input class="fld" id="ciC" size="5" value="${esc(c.comp||'')}" placeholder="9/8"></label><label>Batida <input class="fld" id="ciB" size="16" value="${esc(c.bat||'')}" placeholder="↓ ↑ ↑ ↓ ↑ ↓"></label></div>
+  <textarea class="fld mono" id="ciX" rows="16" spellcheck="false" style="white-space:pre" placeholder="Cole aqui a cifra…">${esc(c.text||'')}</textarea>
+  <div class="tools" style="margin-top:8px"><button class="btn pri" id="ciOk">✔ Pronto</button></div>`;
+  $('#ciT').oninput=e=>set('tom',e.target.value);$('#ciC').oninput=e=>set('comp',e.target.value);$('#ciB').oninput=e=>set('bat',e.target.value);$('#ciX').oninput=e=>set('text',e.target.value);
+  $('#ciOk').onclick=()=>{if(!($('#ciX').value||'').trim())return toast('Cole ou escreva a cifra primeiro');S.viEd=false;renderVi();$('#main').scrollTop=0};return}
+ const k=c.tr||0,fs=c.fs||17,L=parseCifra(c.text),key=keyOf(c),fl=useFlat(key,k),tom=c.tom?trChord(c.tom.trim(),k,fl):'';
+ const seen=[];L.forEach(o=>o.ch.slice().sort((a,b)=>a.p-b.p).forEach(x=>{const t=trChord(x.c,k,fl);if(!seen.includes(t))seen.push(t)}));
+ p.innerHTML=`<div class="tools vtools"><button class="btn" id="viEd">✏️ Editar cifra</button><span class="mute">Tom</span><button class="btn" id="viM" aria-label="Descer meio tom">−</button><b class="mono">${esc(tom||(k?(k>0?'+':'')+k:'original'))}</b><button class="btn" id="viP" aria-label="Subir meio tom">＋</button>${k?'<button class="btn" id="viR">Tom original</button>':''}<span class="mute">Letra</span><button class="btn" id="viAm">A−</button><button class="btn" id="viAp">A＋</button></div>
+ <div class="vcif" style="font-size:${fs}px"><div class="vct">${esc(n.name)}</div><div class="vcm">${tom?`<span><b>Tonalidade:</b> ${esc(tom)}</span>`:''}${c.comp?`<span><b>Compasso:</b> ${esc(c.comp)}</span>`:''}${c.bat?`<span><b>Batida no violão:</b> ${esc(c.bat)}</span>`:''}</div>${L.map(o=>cifLine(o,k,fl)).join('')}</div>
+ ${seen.length?`<h3 style="margin:16px 0 4px">Acordes</h3><div class="vbxs">${seen.map(chordSvg).join('')}</div>`:''}`;
+ $('#viEd').onclick=()=>{S.viEd=true;renderVi();$('#main').scrollTop=0};
+ $('#viM').onclick=()=>{set('tr',((k-1+6)%12+12)%12-6);renderVi()};$('#viP').onclick=()=>{set('tr',((k+1+6)%12+12)%12-6);renderVi()};
+ {const r=$('#viR');if(r)r.onclick=()=>{set('tr',0);renderVi()}}
+ $('#viAm').onclick=()=>{set('fs',Math.max(12,fs-2));renderVi()};$('#viAp').onclick=()=>{set('fs',Math.min(34,fs+2));renderVi()}}
+/* ===== barra flutuante: no rodapé por padrão; arraste pela alça ⠿ para onde ficar melhor (a posição fica salva) ===== */
+function dragify(el,h,key){if(!el||!h)return;
+ const place=(x,y)=>{el.classList.add('moved');const a=Math.max(4,Math.min(innerWidth-el.offsetWidth-4,x)),b=Math.max(4,Math.min(innerHeight-el.offsetHeight-4,y));el.style.left=a+'px';el.style.top=b+'px';return [a,b]};
+ try{const p=JSON.parse(localStorage.getItem(key)||'null');if(p&&typeof p.x==='number')place(p.x*innerWidth,p.y*innerHeight)}catch(e){}
+ h.onpointerdown=e=>{e.preventDefault();let r=el.getBoundingClientRect();if(!el.classList.contains('moved')){place(r.left,r.top);r=el.getBoundingClientRect()}
+  const dx=e.clientX-r.left,dy=e.clientY-r.top;let last=null;try{h.setPointerCapture(e.pointerId)}catch(_){}
+  const mv=ev=>{last=place(ev.clientX-dx,ev.clientY-dy)};
+  const up=()=>{h.removeEventListener('pointermove',mv);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up);if(last){try{localStorage.setItem(key,JSON.stringify({x:last[0]/innerWidth,y:last[1]/innerHeight}))}catch(_){}}fitPw()};
+  h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up)};
+ h.ondblclick=()=>{el.classList.remove('moved');el.style.left=el.style.top='';try{localStorage.removeItem(key)}catch(_){}fitPw();toast('Barra de volta ao rodapé')}}
+function fitPw(){const pw=$('#pw'),b=$('#bars'),f=$('#fab');let rs=12,bh=0;
+ if(b&&!b.hidden&&!b.classList.contains('moved')){rs=b.offsetHeight+16;bh=b.offsetHeight+8}else if(f&&!f.classList.contains('moved')){rs=f.offsetHeight+16;bh=f.offsetHeight+8}
+ document.documentElement.style.setProperty('--barH',bh+'px');/* painéis de metrônomo/afinador sobem acima da barra do rodapé */
+ if(pw)pw.style.maxHeight=Math.max(160,innerHeight-pw.getBoundingClientRect().top-rs)+'px'}
+addEventListener('resize',()=>{fitPw();['#bars','#fab'].forEach(s=>{const e=$(s);if(e&&e.classList.contains('moved')){const r=e.getBoundingClientRect();e.style.left=Math.max(4,Math.min(innerWidth-e.offsetWidth-4,r.left))+'px';e.style.top=Math.max(4,Math.min(innerHeight-e.offsetHeight-4,r.top))+'px'}})});
 function renderNotes(){const p=$('#pane');p.innerHTML=`<p class="mute">Anotações livres sobre esta peça (andamento, dedilhado, tom, observações do ensaio…).</p><textarea class="fld" id="nt" rows="12">${esc(S.n.notes||'')}</textarea>`;$('#nt').oninput=e=>{S.n.notes=e.target.value;saveSoon()}}
 function renderPart(){const n=S.n,p=$('#pane'),N=nPg(n);if(P.src&&P.src!==srcKey()&&(P.playing||P.pos>0))stopPlay();{const pw0=$('#pw');if(pw0&&!S.restore&&S.shownPg===S.pg)S.restore={pg:S.pg,sx:pw0.scrollLeft/Math.max(1,pw0.scrollWidth),sy:pw0.scrollTop/Math.max(1,pw0.scrollHeight)}}$('#main').classList.toggle('focus',!!S.hide);
- p.innerHTML=`${S.hide?`<div class="fab"><button class="btn" id="fP">◀</button><span class="mono">${S.pg+1}/${N||1}</span><button class="btn" id="fN">▶</button>${(()=>{const {ci,ix}=cultoNb(n);return (ix>0?'<button class="btn" id="fPrev">⏮ Anterior</button>':'')+(ix>=0&&ix<ci.length-1?'<button class="btn" id="fNext">Próxima peça ⏭</button>':'')})()}<button class="btn pri" id="fOuv" title="Ouvir esta página">▶</button><button class="btn" id="fOuvS" title="Parar" hidden>⏹</button><button class="btn" id="fMk" title="Trechos marcados">📍</button><button class="btn" id="fMet" title="Metrônomo">🥁</button><button class="btn" id="fFs" title="Tela cheia">⛶</button><button class="btn pri" id="fShow">☰ Ferramentas</button></div>`:''}<div id="bars" ${S.hide?'hidden':''}><div class="pgs"><button class="btn" id="hideT">▴ Ocultar</button><button class="btn" id="pP">◀</button><span class="mono">página ${S.pg+1} / ${N||1}</span><button class="btn" id="pN">▶</button>
- <button class="btn" id="zM">−</button><span class="mono" id="zL">${Math.round(S.zoom)}%</span><button class="btn" id="zP">＋</button><button class="btn ${WAKE?'on':''}" id="wk">💡 Tela acesa</button><button class="btn ${S.marking?'on':''}" id="mkA">📌 Marcar trecho</button><button class="btn pri" id="bOuv">▶ Ouvir</button><button class="btn" id="bOuvS" title="Parar" hidden>⏹</button><span class="mono" id="ouvT"></span><button class="btn" id="mkL">📍 Trechos${(n.marks||[]).length?' ('+n.marks.length+')':''}</button>
+ p.innerHTML=`${S.hide?`<div class="fab" id="fab"><button class="grip" id="fGrip" title="Arraste para mover a barra · toque duplo volta ao rodapé" aria-label="Mover barra">⠿</button><button class="btn" id="fP">◀</button><span class="mono">${S.pg+1}/${N||1}</span><button class="btn" id="fN">▶</button>${(()=>{const {ci,ix}=cultoNb(n);return (ix>0?'<button class="btn" id="fPrev">⏮ Anterior</button>':'')+(ix>=0&&ix<ci.length-1?'<button class="btn" id="fNext">Próxima peça ⏭</button>':'')})()}<button class="btn pri" id="fOuv" title="Ouvir esta página">▶</button><button class="btn" id="fOuvS" title="Parar" hidden>⏹</button>${(n.marks||[]).length?'<button class="btn" id="fMk" title="Trechos salvos">📍</button>':''}<button class="btn" id="fMet" title="Metrônomo">🥁</button><button class="btn" id="fFs" title="Tela cheia">⛶</button><button class="btn pri" id="fShow">☰ Ferramentas</button></div>`:''}<div id="bars" ${S.hide?'hidden':''}><div class="pgs"><button class="grip" id="bGrip" title="Arraste para mover a barra · toque duplo volta ao rodapé" aria-label="Mover barra">⠿</button><button class="btn" id="hideT">▾ Ocultar</button><button class="btn" id="pP">◀</button><span class="mono">página ${S.pg+1} / ${N||1}</span><button class="btn" id="pN">▶</button>
+ <button class="btn" id="zM">−</button><span class="mono" id="zL">${Math.round(S.zoom)}%</span><button class="btn" id="zP">＋</button><button class="btn ${WAKE?'on':''}" id="wk">💡 Tela acesa</button><button class="btn pri" id="bOuv">▶ Ouvir</button><button class="btn" id="bOuvS" title="Parar" hidden>⏹</button><span class="mono" id="ouvT"></span>${(n.marks||[]).length?`<button class="btn" id="mkL">📍 Trechos salvos (${n.marks.length})</button>`:''}
  ${n.kind==='image'?`<button class="btn" id="pRot">⟳ Girar</button><button class="btn" id="pEnh">✨ Realçar</button><button class="btn" id="pCrop">✂ Endireitar/cortar</button><button class="btn" id="pDel">🗑 Página</button><button class="btn" id="pAdd">＋ Página (foto)</button>`:''}</div>
  <div class="tools">${[['read','👆 Ler'],['pen','✏️ Caneta'],['hl','🖍 Marca-texto'],['tx','🅣 Texto'],['er','🧽 Borracha']].map(([k,l])=>`<button class="btn ${S.tool===k?'on':''}" data-tool="${k}">${l}</button>`).join('')}
  ${COLORS.map(c=>`<button class="sw ${S.color===c?'on':''}" data-c="${c}" style="background:${c}" aria-label="cor"></button>`).join('')}
  <input type="range" id="tw" min="1" max="10" value="${S.w}" aria-label="espessura">
  <button class="btn" id="aUndo">↶ Desfazer</button><button class="btn dng" id="aClr">Limpar página</button></div>${S.tool==='tx'?`<div class="tools" id="chips">${PRE.map(t=>`<button class="chip ${S.preset===t?'on':''}" data-pre="${esc(t)}">${esc(t)}</button>`).join('')}<button class="chip ${!S.preset?'on':''}" data-pre="">✎ Digitar…</button></div>`:''}</div>
- <div id="pw" class="${S.marking?'marking':''}" style="overflow:auto;touch-action:pan-x pan-y;overscroll-behavior:contain;max-height:${S.hide?'calc(100vh - 20px)':'calc(100vh - 260px)'};border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px"><div class="page ${S.tool!=='read'?'draw':''}" id="pg" style="width:${S.zoom}%;max-width:none"></div></div>`;
+ <div id="pw" class="${S.marking?'marking':''}" style="overflow:auto;touch-action:pan-x pan-y;overscroll-behavior:contain;max-height:${S.hide?'calc(100vh - 20px)':'calc(100vh - 200px)'};border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px"><div class="page ${S.tool!=='read'?'draw':''}" id="pg" style="width:${S.zoom}%;max-width:none"></div></div>`;
  const goP=()=>{if(S.pg>0){S.pg--;S.undo=[];renderPart()}},goN=()=>{if(S.pg<N-1){S.pg++;S.undo=[];renderPart()}};
  $('#pw').onclick=e=>{if(S.tool!=='read'||ZM.pinched)return;if(S.marking){addMark(e);return}const r=e.currentTarget.getBoundingClientRect();const x=(e.clientX-r.left)/r.width;if(x>=.18&&x<=.82){const t=Date.now();if(t-ZM.tap<320){ZM.tap=0;setZoom(S.zoom<150?200:100,e.clientX,e.clientY)}else ZM.tap=t;return}const {ci,ix}=cultoNb(n);if(x<.18){if(S.pg>0)goP();else if(S.hide&&ix>0)goPiece(ci[ix-1])}else if(x>.82){if(S.pg<N-1)goN();else if(S.hide&&ix>=0&&ix<ci.length-1)goPiece(ci[ix+1])}};
- if(S.hide){$('#fFs').onclick=fsToggle;$('#fMet').onclick=()=>togglePanel('met');$('#fP').onclick=goP;$('#fN').onclick=goN;$('#fShow').onclick=()=>{S.hide=false;setPrefHide(false);renderPart()};$('#fMk').onclick=()=>marksMenu();$('#fOuv').onclick=ouvir;$('#fOuvS').onclick=()=>stopPlay();{const {ci,ix}=cultoNb(n);const fnx=$('#fNext'),fpv=$('#fPrev');if(fnx)fnx.onclick=()=>goPiece(ci[ix+1]);if(fpv)fpv.onclick=()=>goPiece(ci[ix-1])};return mountPage()}
- $('#hideT').onclick=()=>{S.hide=true;setPrefHide(true);renderPart()};$('#mkA').onclick=()=>{S.marking=!S.marking;S.tool='read';if(S.marking)toast('Toque no ponto da partitura que quer marcar');renderPart()};$('#mkL').onclick=()=>marksMenu();$('#bOuv').onclick=ouvir;$('#bOuvS').onclick=()=>stopPlay();
+ if(S.hide){dragify($('#fab'),$('#fGrip'),'jsFabPos');$('#fFs').onclick=fsToggle;$('#fMet').onclick=()=>togglePanel('met');$('#fP').onclick=goP;$('#fN').onclick=goN;$('#fShow').onclick=()=>{S.hide=false;setPrefHide(false);renderPart()};{const fm=$('#fMk');if(fm)fm.onclick=()=>marksMenu()};$('#fOuv').onclick=ouvir;$('#fOuvS').onclick=()=>stopPlay();{const {ci,ix}=cultoNb(n);const fnx=$('#fNext'),fpv=$('#fPrev');if(fnx)fnx.onclick=()=>goPiece(ci[ix+1]);if(fpv)fpv.onclick=()=>goPiece(ci[ix-1])};return mountPage()}
+ dragify($('#bars'),$('#bGrip'),'jsBarPos');$('#hideT').onclick=()=>{S.hide=true;setPrefHide(true);renderPart()};{const ml=$('#mkL');if(ml)ml.onclick=()=>marksMenu()};$('#bOuv').onclick=ouvir;$('#bOuvS').onclick=()=>stopPlay();
  $('#wk').onclick=()=>{WAKE=!WAKE;if(WAKE){WLmsg=false;wake();toast('Tela ficará acesa durante a leitura')}else{unwake();toast('Tela acesa desligada')}renderPart()};
  p.querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{S.preset=b.dataset.pre||null;renderPart()});
  $('#pP').onclick=goP;$('#pN').onclick=goN;
@@ -329,7 +429,7 @@ function renderPart(){const n=S.n,p=$('#pane'),N=nPg(n);if(P.src&&P.src!==srcKey
   $('#pAdd').onclick=()=>$('#fAdd').click()}
  mountPage()}
 $('#fAdd').onchange=async e=>{const fs=[...e.target.files];e.target.value='';if(!S||S.n.kind!=='image')return;for(const f of fs){if(f.type.startsWith('image/'))S.n.pages.push(await procImage(f))}await dbPut(S.n);S.pg=S.n.pages.length-1;renderPart();if(fs.length===1)cropPage()};
-async function mountPage(){const n=S.n,box=$('#pg');let base;bindZoom();
+async function mountPage(){const n=S.n,box=$('#pg');let base;bindZoom();fitPw();
  if(n.kind==='image'){base=document.createElement('img');base.style.cssText='display:block;width:100%;height:auto';base.src=URL.createObjectURL(n.pages[S.pg]);await new Promise(r=>base.onload=r)}
  else{base=document.createElement('canvas');base.id='pbase';base.style.cssText='display:block;width:100%;height:auto';if(!pdfDoc){box.textContent='PDF indisponível';return}await drawPdfBase(base)}
  box.innerHTML='';box.appendChild(base);const ov=document.createElement('canvas');ov.className='ov';ov.id='ov';const W=base.naturalWidth||base.width,H=base.naturalHeight||base.height;ov.width=Math.min(W,2000);ov.height=Math.round(ov.width*H/W);ov.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%';box.appendChild(ov);bindDraw(ov);drawAnn();drawPins();restoreView();updOuv();if(n.kind==='image')preloadImg()}
@@ -347,7 +447,7 @@ function preloadImg(){const n=S.n,b=(n.pages||[])[S.pg+1];if(!b)return;const im=
 function drawPins(){const box=$('#pg');if(!box)return;box.querySelectorAll('.pin').forEach(e=>e.remove());(S.n.marks||[]).forEach(m=>{if(m.pg!==S.pg)return;const d=document.createElement('div');d.className='pin';d.style.left=(m.x*100)+'%';d.style.top=(m.y*100)+'%';d.textContent='📌 '+m.name;box.appendChild(d)})}
 async function addMark(e){const pg=$('#pg');if(!pg)return;const r=pg.getBoundingClientRect();const x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;if(x<0||x>1||y<0||y>1)return;S.marking=false;const n=S.n;
  const nm=await ask('Nome do trecho','Trecho '+((n.marks||[]).length+1)+' – pág. '+(S.pg+1),'Salvar');if(nm){(n.marks=n.marks||[]).push({pg:S.pg,x,y,name:nm,zoom:Math.max(150,Math.round(S.zoom))});await dbPut(n);toast('Trecho marcado: toque em 📍 para voltar a ele')}renderPart()}
-async function marksMenu(){const n=S.n,M=n.marks||[];if(!M.length)return toast('Nenhum trecho marcado. Use “📌 Marcar trecho”.');
+async function marksMenu(){const n=S.n,M=n.marks||[];if(!M.length)return toast('Nenhum trecho salvo nesta peça.');
  const i=await menu([...M.map(m=>'📍 '+m.name+'  (pág. '+(m.pg+1)+')'),'🗑 Apagar um trecho…']);if(i==null||i<0)return;
  if(i<M.length){const m=M[i];S.pg=m.pg;S.zoom=m.zoom;S.undo=[];S.restore={pg:m.pg,cx:m.x,cy:m.y};return renderPart()}
  const j=await menu(M.map(m=>'🗑 '+m.name+'  (pág. '+(m.pg+1)+')'));if(j==null||j<0||j>=M.length)return;M.splice(j,1);await dbPut(n);toast('Trecho apagado');renderPart()}

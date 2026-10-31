@@ -95,6 +95,7 @@ main{background:var(--panel);border:1px solid var(--line);border-radius:14px;ove
 .vtools label{display:inline-flex;gap:6px;align-items:center}.vtools .fld{width:auto}
 #abcbox{width:100%;min-height:150px;font-family:"IBM Plex Mono",monospace;font-size:13px}
 #paper{background:#fff;border-radius:10px;padding:8px;overflow:auto;color:#111}
+#paper .cur,#paper .cur *{fill:#c8372d;stroke:#c8372d;color:#c8372d}
 canvas.roll{width:100%;height:150px;background:var(--bg);border:1px solid var(--line);border-radius:10px;display:block}
 .player{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
 .msg{padding:8px 12px;border-radius:9px;background:color-mix(in srgb,var(--accent) 12%,transparent);margin:8px 0;font-size:14px}
@@ -547,7 +548,19 @@ function stopPlay(done){clearInterval(P.timer);cancelAnimationFrame(P.raf);P.pla
 function seek(s){const was=P.playing;if(was)pausePlay();if(AC&&P.master){P.master.disconnect();P.master=AC.createGain();P.master.gain.value=.8;const c=AC.createDynamicsCompressor();P.master.connect(c);c.connect(AC.destination)}P.pos=Math.max(0,Math.min(P.end,s));updTime();drawRoll();if(was)play()}
 function updBtn(){const b=$('#bPlay');if(b)b.textContent=P.playing?'⏸ Pausar':'▶ Tocar';updOuv()}
 const fmt=s=>{s=Math.max(0,s);return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
-function updTime(){const t=$('#tm'),sl=$('#seek');if(t)t.textContent=fmt(posNow())+' / '+fmt(P.end);if(sl&&document.activeElement!==sl)sl.value=P.end?posNow()/P.end*1000:0}
+function updTime(){const t=$('#tm'),sl=$('#seek');if(t)t.textContent=fmt(posNow())+' / '+fmt(P.end);if(sl&&document.activeElement!==sl)sl.value=P.end?posNow()/P.end*1000:0;paperCursor()}
+/* cursor na pauta: destaca no ABC desenhado (#paper) a nota que está soando, pelo mesmo relógio do som */
+const CUR={nt:[],on:[],i:-1,line:-1};
+function drawPaper(){const pp=$('#paper');CUR.nt=[];CUR.on=[];CUR.i=-1;CUR.line=-1;if(!pp||!S.n.abc||!ABC)return;
+ try{const vo=ABC.renderAbc('paper',S.n.abc,{responsive:'resize',add_classes:true})[0];vo.setTiming();const nt=vo.noteTimings||[];
+  const end=nt.length?nt[nt.length-1].milliseconds/1000:0,k=end&&P.end&&Math.abs(P.end/end-1)>.03?P.end/end:1;   /* se o tempo total divergir do som, ajusta a escala */
+  CUR.nt=nt.filter(t=>t.type==='event'&&t.elements&&t.elements.length).map(t=>({t:t.milliseconds/1000*k,el:t.elements.flat(),line:t.line}))}catch(e){}
+ paperCursor()}
+function paperCursor(){if(!CUR.nt.length||!CUR.nt[0].el[0].isConnected)return;   /* pauta fora da tela (outra aba) */const p=posNow();let i=-1;
+ if(P.playing||P.pos>0){let lo=0,hi=CUR.nt.length-1;while(lo<=hi){const m=(lo+hi)>>1;if(CUR.nt[m].t<=p+.01){i=m;lo=m+1}else hi=m-1}}
+ if(i===CUR.i)return;CUR.on.forEach(e=>e.classList.remove('cur'));CUR.i=i;CUR.on=i<0?[]:CUR.nt[i].el;CUR.on.forEach(e=>e.classList.add('cur'));
+ /* ao mudar de linha, rola só se a nota estiver fora da tela */
+ if(i>=0&&P.playing&&CUR.nt[i].line!==CUR.line){CUR.line=CUR.nt[i].line;const e=CUR.on[0],r=e&&e.getBoundingClientRect();if(r&&(r.top<90||r.bottom>innerHeight-90))e.scrollIntoView({block:'center',behavior:'smooth'})}}
 function loopUI(){cancelAnimationFrame(P.raf);const f=()=>{updTime();drawRoll();if(P.playing)P.raf=requestAnimationFrame(f)};f()}
 function drawRoll(){const c=$('#roll');if(!c)return;const w=c.clientWidth*devicePixelRatio,h=c.clientHeight*devicePixelRatio;if(c.width!==w||c.height!==h){c.width=w;c.height=h}const x=c.getContext('2d');x.clearRect(0,0,w,h);if(!P.ev.length)return;
  let lo=127,hi=0;P.ev.forEach(e=>{lo=Math.min(lo,e.m);hi=Math.max(hi,e.m)});lo-=2;hi+=2;const rh=h/(hi-lo+1);const st=getComputedStyle(document.body);x.fillStyle=st.getPropertyValue('--accent').trim()||'#2b4a8b';
@@ -563,7 +576,7 @@ async function loadFromScore(){const n=S.n;try{if(n.abc&&n.abc.trim())await need
  }catch(e){console.error(e);setEvents([]);msg('Não consegui ler a música: '+e.message,1);afterLoad()}
  setEvents([]);afterLoad()}
 function msg(t,err){const m=$('#smsg');if(m)m.innerHTML=t?`<div class="msg ${err?'err':''}">${esc(t)}</div>`:''}
-function afterLoad(){updTime();drawRoll();if(S&&S.autoplay&&P.ev.length){S.autoplay=false;setTimeout(()=>{play();toast(trLabel())},150)}else if(S)S.autoplay=false;const pp=$('#paper');if(pp&&S.n.abc&&ABC){try{ABC.renderAbc('paper',S.n.abc,{responsive:'resize',add_classes:true})}catch(e){}}}
+function afterLoad(){updTime();drawRoll();if(S&&S.autoplay&&P.ev.length){S.autoplay=false;setTimeout(()=>{play();toast(trLabel())},150)}else if(S)S.autoplay=false;drawPaper()}
 function renderSom(box){const n=S.n;const keep=P.src===srcKey()&&P.ev.length>0;if(!keep)stopPlay();const canAbc=n.kind==='abc'||hasPages(n);if(hasPages(n)){n.abc=(n.abcPages||{})[S.pg]||'';if(n.abc&&!abcTempo(n.abc).has){n.abc=fixAbc(n.abc);n.abcPages[S.pg]=n.abc}}
  box.innerHTML=`<div id="smsg"></div>
  ${hasPages(n)?`<div class="msg">Para tocar a partitura de uma foto/PDF, o Claude lê a imagem e a transcreve em notação ABC. É aproximado: confira e corrija o texto abaixo. Funciona melhor com uma página nítida, de frente e bem iluminada.</div><div class="tools"><button class="btn pri" id="bOcr">🎼 Transcrever página ${S.pg+1} com IA</button><button class="btn" id="bKey">🔑 Chave da IA${aiKey()?' ✓':''}</button></div>`:''}
@@ -591,7 +604,7 @@ function renderSom(box){const n=S.n;const keep=P.src===srcKey()&&P.ev.length>0;i
  $('#roll').onclick=e=>{const r=e.target.getBoundingClientRect();seek((e.clientX-r.left)/r.width*P.end)};
  if(canAbc){$('#bApply').onclick=async()=>{try{await needAbc()}catch(e){return msg(e.message,1)}n.abc=$('#abcbox').value;if(hasPages(n))(n.abcPages=n.abcPages||{})[S.pg]=n.abc;dbPut(n);try{setEvents(abcToEvents(n.abc));msg('');afterLoad();play()}catch(e){msg('ABC inválido: '+e.message,1)}};$('#abcbox').oninput=e=>{n.abc=e.target.value;if(hasPages(n))(n.abcPages=n.abcPages||{})[S.pg]=n.abc;saveSoon()}}
  if(hasPages(n)){$('#bOcr').onclick=()=>{ensureAC();transcribe()};$('#bKey').onclick=keyDialog}
- if(keep){updTime();drawRoll();updBtn();const pp=$('#paper');if(pp&&n.abc&&ABC){try{ABC.renderAbc('paper',n.abc,{responsive:'resize',add_classes:true})}catch(e){}}}else loadFromScore()}
+ if(keep){drawPaper();updTime();drawRoll();updBtn()}else loadFromScore()}
 
 /* ===== OCR musical via Claude (sample) ===== */
 async function pageBlob(){const n=S.n;if(n.kind==='image')return n.pages[S.pg];const pgd=await pdfDoc.getPage(S.pg+1);const vp0=pgd.getViewport({scale:1});const vp=pgd.getViewport({scale:Math.min(2,1600/vp0.width)});const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;await pgd.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;return cvBlob(c,.9)}

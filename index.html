@@ -178,11 +178,14 @@ async function delNode(n){const sub=n.type==='folder'?NODES.filter(x=>isDesc(x.i
 async function moveNode(n,pid){if(n.id===pid||n.parentId===pid)return;if(pid&&isDesc(pid,n.id)){toast('Não dá para mover uma pasta para dentro dela mesma');return}n.parentId=pid;await dbPut(n);await reload();render();toast('Movido')}
 async function copyDeep(n,pid,suffix){const c=structuredClone(n);c.id=uid();c.parentId=pid;c.created=Date.now();if(suffix)c.name=n.name+suffix;await dbPut(c);if(n.type==='folder'){for(const k of kids(n.id))await copyDeep(k,c.id,'')}return c}
 /* ===== voltar ao início ===== */
-function flushView(){clearTimeout(saveT);if(S)dbPut(S.n);unwake();S=null}
+function flushView(){clearTimeout(saveT);if(S)dbPut(S.n);sideRestore();S=null}
 function fsToggle(){const d=document,el=d.documentElement;try{if(d.fullscreenElement||d.webkitFullscreenElement){(d.exitFullscreen||d.webkitExitFullscreen).call(d)}else{const f=el.requestFullscreen||el.webkitRequestFullscreen;if(!f)throw 0;const r=f.call(el);if(r&&r.catch)r.catch(()=>toast('Tela cheia não permitida aqui. Instale o app pelo menu do Chrome (Instalar app) para abrir sem barras.'))}}catch(e){toast('Tela cheia não permitida aqui. Instale o app pelo menu do Chrome (Instalar app) para abrir sem barras.')}}
 const WIDE=()=>window.matchMedia('(min-width:761px)').matches;
 function sideClose(){$('#side').classList.remove('open')}
 function sideHide(){sideClose();if(WIDE())$('.app').classList.add('nosb')}
+/* o painel escondido ao abrir uma partitura volta ao sair dela (senão o Culto some da tela inicial) */
+let SBAUTO=false;
+function sideRestore(){if(SBAUTO){$('.app').classList.remove('nosb');SBAUTO=false}}
 function sideToggle(){if(WIDE())$('.app').classList.toggle('nosb');else $('#side').classList.toggle('open')}
 async function goHome(){if(viewing){stopPlay();flushView()}Q='';$('#q').value='';cur=ROOT;viewing=null;sideClose();await reload();render()}
 $('#brand').onclick=goHome;
@@ -202,10 +205,22 @@ function renderSearch(){const m=$('#main');const q=norm(Q);const res=NODES.filte
  m.querySelectorAll('[data-cul]').forEach(b=>b.onclick=async e=>{e.stopPropagation();await toggleCulto(b.dataset.cul)})}
 $('#q').oninput=e=>{Q=e.target.value.trim();if(viewing){closeScore();return}render()};
 /* ===== tela acesa ===== */
-let WL=null,WAKE=true,WLmsg=false;
-async function wake(){if(!WAKE||WL)return;try{if(!('wakeLock' in navigator))throw 0;WL=await navigator.wakeLock.request('screen');WL.addEventListener('release',()=>{WL=null})}catch(e){WL=null;if(!WLmsg){WLmsg=true;toast('Este navegador não deixou manter a tela acesa. Ajuste o “tempo de tela” do tablet.')}}}
-function unwake(){try{if(WL)WL.release()}catch(e){}WL=null}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&viewing)wake()});
+/* ligada: fica acesa por no mínimo 30 min, mesmo fora da partitura; cada toque renova os 30 min.
+   se o sistema soltar o bloqueio, pede de novo; sem Wake Lock, usa um vídeo mudo invisível */
+const WAKEMIN=30*60*1000;
+let WL=null,WAKE=true,WLmsg=false,WAKEUNTIL=0,WAKET=null,NSV=null;
+async function wake(){if(!WAKE)return;WAKEUNTIL=Date.now()+WAKEMIN;clearInterval(WAKET);WAKET=setInterval(wakeTick,20000);await wakeGet()}
+function wakeTick(){if(Date.now()>WAKEUNTIL)unwake();else wakeGet()}
+function wakeKeep(){if(WAKE&&WAKEUNTIL)WAKEUNTIL=Math.max(WAKEUNTIL,Date.now()+WAKEMIN)}
+async function wakeGet(){if(!WAKE||!WAKEUNTIL||document.hidden||Date.now()>WAKEUNTIL)return;if(WL)return;
+ try{if(!('wakeLock' in navigator))throw 0;WL=await navigator.wakeLock.request('screen');WL.addEventListener('release',()=>{WL=null;setTimeout(wakeGet,600)})}catch(e){WL=null;wakeVid()}}
+function wakeVid(){if(NSV){NSV.play().catch(()=>{});return}
+ try{const c=document.createElement('canvas');c.width=c.height=2;const x=c.getContext('2d'),v=document.createElement('video');v.muted=true;v.loop=true;v.playsInline=true;v.setAttribute('playsinline','');v.style.cssText='position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:.01;pointer-events:none';
+  v.srcObject=c.captureStream(1);let t=0;v._t=setInterval(()=>{x.fillStyle=(t^=1)?'#000':'#020202';x.fillRect(0,0,2,2)},1000);document.body.appendChild(v);NSV=v;v.play().catch(()=>{})}
+ catch(e){if(!WLmsg){WLmsg=true;toast('Este navegador não deixou manter a tela acesa. Ajuste o “tempo de tela” do tablet.')}}}
+function unwake(){WAKEUNTIL=0;clearInterval(WAKET);try{if(WL)WL.release()}catch(e){}WL=null;if(NSV){clearInterval(NSV._t);NSV.remove();NSV=null}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)wakeGet()});
+addEventListener('pointerdown',wakeKeep,true);addEventListener('keydown',wakeKeep,true);
 /* ===== atalhos de anotação ===== */
 const PRE=['2x','3x','Repetir','Rit.','Fermata','Cresc.','Dim.','Respirar','Solo','Tutti','D.C.','D.S.','Coda','Fim'];
 /* ===== lista do Culto ===== */
@@ -285,12 +300,14 @@ function render(){renderTree();if(viewing)return;const m=$('#main');m.classList.
  let h=`<div class="top"><button class="btn mb" id="bMenu">☰</button><div class="crumbs"><a data-id="">Início</a>${cs.map(c=>`<span class="mute">/</span><a data-id="${c.id}">${esc(c.name)}</a>`).join('')}</div>
  <button class="btn" id="bNF">📁 Nova pasta</button><button class="btn" id="bImp">⬆ Importar</button><button class="btn pri" id="bCam">📷 Foto da partitura</button></div>`;
  const ch=kids(cur).sort((a,b)=>(a.type===b.type?0:a.type==='folder'?-1:1));
- if(!ch.length)h+=`<div class="empty"><h2>${cur?'Pasta vazia':'Seu repertório começa aqui'}</h2><p>Tire uma foto de uma partitura, importe PDF, imagem, MusicXML, MIDI ou ABC, ou crie pastas e subpastas para organizar.</p></div>`;
- else h+='<div class="grid">'+ch.map(n=>`<div class="card" draggable="true" data-id="${n.id}"><div class="thumb">${n.type==='folder'?'📁':({image:'',pdf:'📄',musicxml:'🎼',midi:'🎹',abc:'🎼'})[n.kind]===''?'<img alt="">':({pdf:'📄',musicxml:'🎼',midi:'🎹',abc:'🎼'})[n.kind]}</div><div class="cn">${esc(n.name)}</div><div class="cs">${n.type==='folder'?kids(n.id).length+' itens':n.kind}</div><button class="dots" data-m="${n.id}">⋯</button></div>`).join('')+'</div>';
+ const cul=cur===ROOT?`<div class="card" data-culto="1"><div class="thumb">🎷</div><div class="cn">Culto</div><div class="cs">${byId('culto')?byId('culto').items.filter(byId).length:0} peças</div></div>`:'';
+ if(!ch.length)h+=(cul?'<div class="grid">'+cul+'</div>':'')+`<div class="empty"><h2>${cur?'Pasta vazia':'Seu repertório começa aqui'}</h2><p>Tire uma foto de uma partitura, importe PDF, imagem, MusicXML, MIDI ou ABC, ou crie pastas e subpastas para organizar.</p></div>`;
+ else h+='<div class="grid">'+cul+ch.map(n=>`<div class="card" draggable="true" data-id="${n.id}"><div class="thumb">${n.type==='folder'?'📁':({image:'',pdf:'📄',musicxml:'🎼',midi:'🎹',abc:'🎼'})[n.kind]===''?'<img alt="">':({pdf:'📄',musicxml:'🎼',midi:'🎹',abc:'🎼'})[n.kind]}</div><div class="cn">${esc(n.name)}</div><div class="cs">${n.type==='folder'?kids(n.id).length+' itens':n.kind}</div><button class="dots" data-m="${n.id}">⋯</button></div>`).join('')+'</div>';
  m.innerHTML=h;
  m.querySelectorAll('.crumbs a').forEach(a=>a.onclick=()=>{cur=a.dataset.id||ROOT;render()});
  $('#bNF').onclick=()=>mkFolder(cur);$('#bImp').onclick=()=>$('#fImport').click();$('#bCam').onclick=()=>$('#fCam').click();const bm=$('#bMenu');if(bm)bm.onclick=()=>sideToggle();
- m.querySelectorAll('.card').forEach(c=>{const n=byId(c.dataset.id);c.onclick=e=>{if(e.target.dataset.m)return;n.type==='folder'?(cur=n.id,openIds.add(n.id),render()):openScore(n.id)};c.ondragstart=()=>{dragId=n.id};if(n.type==='folder')dropTarget(c,n.id);
+ {const cc=$('[data-culto]',m);if(cc)cc.onclick=()=>{cur='__culto';render()}}
+ m.querySelectorAll('.card[data-id]').forEach(c=>{const n=byId(c.dataset.id);c.onclick=e=>{if(e.target.dataset.m)return;n.type==='folder'?(cur=n.id,openIds.add(n.id),render()):openScore(n.id)};c.ondragstart=()=>{dragId=n.id};if(n.type==='folder')dropTarget(c,n.id);
   if(n.kind==='image'&&n.pages&&n.pages[0]){const im=$('img',c);if(im)im.src=URL.createObjectURL(n.pages[0])}});
  m.querySelectorAll('.dots').forEach(b=>b.onclick=e=>{e.stopPropagation();nodeMenu(byId(b.dataset.m))})}
 $('#sNewFolder').onclick=()=>mkFolder(cur==='__culto'?ROOT:cur);
@@ -305,11 +322,11 @@ const COLORS=['#c8372d','#1f4fd1','#1b8a4b','#111111','#e08a00'];
 const hasPages=n=>n.kind==='image'||n.kind==='pdf';
 const nPg=n=>n.kind==='pdf'?(n.nPages||1):(n.pages||[]).length;
 function saveSoon(){const n=S.n;clearTimeout(saveT);saveT=setTimeout(()=>dbPut(n),400)}
-async function openScore(id){sideHide();stopPlay&&stopPlay();viewing=id;pdfDoc=null;const n=byId(id);
+async function openScore(id){if(!viewing&&WIDE()&&!$('.app').classList.contains('nosb'))SBAUTO=true;sideHide();stopPlay&&stopPlay();viewing=id;pdfDoc=null;const n=byId(id);
  const v0=loadView(id);S={n,tab:hasPages(n)?'part':'som',pg:Math.max(0,Math.min(v0.pg||0,(n.kind==='pdf'?(n.nPages||1):(n.pages||[]).length||1)-1)),tool:'read',color:COLORS[0],w:3,zoom:v0.zoom||100,undo:[],hide:KEEPHIDE||prefHide(),restore:v0.pg!=null?v0:null};wake();
  if(n.kind==='pdf'){try{pdfDoc=await (await needPdf()).getDocument({data:await n.pdf.arrayBuffer()}).promise;await detectParts();if(v0.pg==null){const mp=myPartPage();if(mp>0){S.pg=mp;toast('Abrindo na sua parte: '+n.partNames[mp])}}}catch(e){toast('Não consegui abrir o PDF')}}
  renderViewer()}
-function closeScore(){stopPlay&&stopPlay();clearTimeout(saveT);dbPut(S.n);unwake();viewing=null;S=null;document.documentElement.style.setProperty('--barH','0px');reload().then(render)}
+function closeScore(){stopPlay&&stopPlay();clearTimeout(saveT);dbPut(S.n);sideRestore();viewing=null;S=null;document.documentElement.style.setProperty('--barH','0px');reload().then(render)}
 function renderViewer(){const n=S.n,m=$('#main');m.classList.remove('focus');document.documentElement.style.setProperty('--barH','0px');
  m.innerHTML=`<div class="top"><button class="btn mb" id="bMenu">☰</button><button class="btn" id="vHome" title="Início">🏠</button><button class="btn" id="vBack">← Voltar</button><div class="crumbs"><a id="vName" title="Renomear">${esc(n.name)}</a></div>${(()=>{const {ci,ix}=cultoNb(n);return `<button class="btn ${ix>=0?'on':''}" id="vCul">${ix>=0?'🎷 No Culto':'＋ Culto'}</button>`+(ix>=0&&ci.length>1?`<button class="btn" id="vPrev" ${ix>0?'':'disabled'}>⏮</button><button class="btn" id="vNext" ${ix<ci.length-1?'':'disabled'}>Próxima ⏭</button>`:'')})()}<button class="btn" id="vMet" title="Metrônomo">🥁</button><button class="btn" id="vTun" title="Afinador">🎯</button><button class="btn" id="vFs" title="Tela cheia">⛶</button><button class="btn" id="vMore">⋯</button></div>
  <div class="tabs">${hasPages(n)?`<button class="tab ${S.tab==='part'?'on':''}" data-t="part">Partitura</button>`:''}<button class="tab ${S.tab==='som'?'on':''}" data-t="som">Som</button><button class="tab ${S.tab==='vi'?'on':''}" data-t="vi">🎸 Violão</button><button class="tab ${S.tab==='nt'?'on':''}" data-t="nt">Notas</button></div><div class="pane" id="pane"></div>`;
@@ -402,7 +419,7 @@ function fitPw(){const pw=$('#pw'),b=$('#bars'),f=$('#fab');let rs=12,bh=0;
 addEventListener('resize',()=>{fitPw();['#bars','#fab'].forEach(s=>{const e=$(s);if(e&&e.classList.contains('moved')){const r=e.getBoundingClientRect();e.style.left=Math.max(4,Math.min(innerWidth-e.offsetWidth-4,r.left))+'px';e.style.top=Math.max(4,Math.min(innerHeight-e.offsetHeight-4,r.top))+'px'}})});
 function renderNotes(){const p=$('#pane');p.innerHTML=`<p class="mute">Anotações livres sobre esta peça (andamento, dedilhado, tom, observações do ensaio…).</p><textarea class="fld" id="nt" rows="12">${esc(S.n.notes||'')}</textarea>`;$('#nt').oninput=e=>{S.n.notes=e.target.value;saveSoon()}}
 function renderPart(){const n=S.n,p=$('#pane'),N=nPg(n);if(P.src&&P.src!==srcKey()&&(P.playing||P.pos>0))stopPlay();{const pw0=$('#pw');if(pw0&&!S.restore&&S.shownPg===S.pg)S.restore={pg:S.pg,sx:pw0.scrollLeft/Math.max(1,pw0.scrollWidth),sy:pw0.scrollTop/Math.max(1,pw0.scrollHeight)}}$('#main').classList.toggle('focus',!!S.hide);
- p.innerHTML=`${S.hide?`<div class="fab" id="fab"><button class="grip" id="fGrip" title="Arraste para mover a barra · toque duplo volta ao rodapé" aria-label="Mover barra">⠿</button><button class="btn" id="fP">◀</button><span class="mono">${S.pg+1}/${N||1}</span><button class="btn" id="fN">▶</button>${(()=>{const {ci,ix}=cultoNb(n);return (ix>0?'<button class="btn" id="fPrev">⏮ Anterior</button>':'')+(ix>=0&&ix<ci.length-1?'<button class="btn" id="fNext">Próxima peça ⏭</button>':'')})()}<button class="btn pri" id="fOuv" title="Ouvir esta página">▶</button><button class="btn" id="fOuvS" title="Parar" hidden>⏹</button>${(n.marks||[]).length?'<button class="btn" id="fMk" title="Trechos salvos">📍</button>':''}<button class="btn" id="fMet" title="Metrônomo">🥁</button><button class="btn" id="fFs" title="Tela cheia">⛶</button><button class="btn pri" id="fShow">☰ Ferramentas</button></div>`:''}<div id="bars" ${S.hide?'hidden':''}><div class="pgs"><button class="grip" id="bGrip" title="Arraste para mover a barra · toque duplo volta ao rodapé" aria-label="Mover barra">⠿</button><button class="btn" id="hideT">▾ Ocultar</button><button class="btn" id="pP">◀</button><span class="mono">página ${S.pg+1} / ${N||1}</span><button class="btn" id="pN">▶</button>
+ p.innerHTML=`${S.hide?`<div class="fab" id="fab"><button class="grip" id="fGrip" title="Arraste para mover a barra · toque duplo volta ao rodapé" aria-label="Mover barra">⠿</button><button class="btn" id="fBack">← Voltar</button><button class="btn" id="fP">◀</button><span class="mono">${S.pg+1}/${N||1}</span><button class="btn" id="fN">▶</button>${(()=>{const {ci,ix}=cultoNb(n);return (ix>0?'<button class="btn" id="fPrev">⏮ Anterior</button>':'')+(ix>=0&&ix<ci.length-1?'<button class="btn" id="fNext">Próxima peça ⏭</button>':'')})()}<button class="btn pri" id="fOuv" title="Ouvir esta página">▶</button><button class="btn" id="fOuvS" title="Parar" hidden>⏹</button>${(n.marks||[]).length?'<button class="btn" id="fMk" title="Trechos salvos">📍</button>':''}<button class="btn" id="fMet" title="Metrônomo">🥁</button><button class="btn" id="fFs" title="Tela cheia">⛶</button><button class="btn pri" id="fShow">☰ Ferramentas</button></div>`:''}<div id="bars" ${S.hide?'hidden':''}><div class="pgs"><button class="grip" id="bGrip" title="Arraste para mover a barra · toque duplo volta ao rodapé" aria-label="Mover barra">⠿</button><button class="btn" id="bBack">← Voltar</button><button class="btn" id="hideT">▾ Ocultar</button><button class="btn" id="pP">◀</button><span class="mono">página ${S.pg+1} / ${N||1}</span><button class="btn" id="pN">▶</button>
  <button class="btn" id="zM">−</button><span class="mono" id="zL">${Math.round(S.zoom)}%</span><button class="btn" id="zP">＋</button><button class="btn ${WAKE?'on':''}" id="wk">💡 Tela acesa</button><button class="btn pri" id="bOuv">▶ Ouvir</button><button class="btn" id="bOuvS" title="Parar" hidden>⏹</button><span class="mono" id="ouvT"></span>${(n.marks||[]).length?`<button class="btn" id="mkL">📍 Trechos salvos (${n.marks.length})</button>`:''}
  ${n.kind==='image'?`<button class="btn" id="pRot">⟳ Girar</button><button class="btn" id="pEnh">✨ Realçar</button><button class="btn" id="pCrop">✂ Endireitar/cortar</button><button class="btn" id="pDel">🗑 Página</button><button class="btn" id="pAdd">＋ Página (foto)</button>`:''}</div>
  <div class="tools">${[['read','👆 Ler'],['pen','✏️ Caneta'],['hl','🖍 Marca-texto'],['tx','🅣 Texto'],['er','🧽 Borracha']].map(([k,l])=>`<button class="btn ${S.tool===k?'on':''}" data-tool="${k}">${l}</button>`).join('')}
@@ -412,9 +429,9 @@ function renderPart(){const n=S.n,p=$('#pane'),N=nPg(n);if(P.src&&P.src!==srcKey
  <div id="pw" class="${S.marking?'marking':''}" style="overflow:auto;touch-action:pan-x pan-y;overscroll-behavior:contain;max-height:${S.hide?'calc(100vh - 20px)':'calc(100vh - 200px)'};border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:8px"><div class="page ${S.tool!=='read'?'draw':''}" id="pg" style="width:${S.zoom}%;max-width:none"></div></div>`;
  const goP=()=>{if(S.pg>0){S.pg--;S.undo=[];renderPart()}},goN=()=>{if(S.pg<N-1){S.pg++;S.undo=[];renderPart()}};
  $('#pw').onclick=e=>{if(S.tool!=='read'||ZM.pinched)return;if(S.marking){addMark(e);return}const r=e.currentTarget.getBoundingClientRect();const x=(e.clientX-r.left)/r.width;if(x>=.18&&x<=.82){const t=Date.now();if(t-ZM.tap<320){ZM.tap=0;setZoom(S.zoom<150?200:100,e.clientX,e.clientY)}else ZM.tap=t;return}const {ci,ix}=cultoNb(n);if(x<.18){if(S.pg>0)goP();else if(S.hide&&ix>0)goPiece(ci[ix-1])}else if(x>.82){if(S.pg<N-1)goN();else if(S.hide&&ix>=0&&ix<ci.length-1)goPiece(ci[ix+1])}};
- if(S.hide){dragify($('#fab'),$('#fGrip'),'jsFabPos');$('#fFs').onclick=fsToggle;$('#fMet').onclick=()=>togglePanel('met');$('#fP').onclick=goP;$('#fN').onclick=goN;$('#fShow').onclick=()=>{S.hide=false;setPrefHide(false);renderPart()};{const fm=$('#fMk');if(fm)fm.onclick=()=>marksMenu()};$('#fOuv').onclick=ouvir;$('#fOuvS').onclick=()=>stopPlay();{const {ci,ix}=cultoNb(n);const fnx=$('#fNext'),fpv=$('#fPrev');if(fnx)fnx.onclick=()=>goPiece(ci[ix+1]);if(fpv)fpv.onclick=()=>goPiece(ci[ix-1])};return mountPage()}
- dragify($('#bars'),$('#bGrip'),'jsBarPos');$('#hideT').onclick=()=>{S.hide=true;setPrefHide(true);renderPart()};{const ml=$('#mkL');if(ml)ml.onclick=()=>marksMenu()};$('#bOuv').onclick=ouvir;$('#bOuvS').onclick=()=>stopPlay();
- $('#wk').onclick=()=>{WAKE=!WAKE;if(WAKE){WLmsg=false;wake();toast('Tela ficará acesa durante a leitura')}else{unwake();toast('Tela acesa desligada')}renderPart()};
+ if(S.hide){dragify($('#fab'),$('#fGrip'),'jsFabPos');$('#fBack').onclick=closeScore;$('#fFs').onclick=fsToggle;$('#fMet').onclick=()=>togglePanel('met');$('#fP').onclick=goP;$('#fN').onclick=goN;$('#fShow').onclick=()=>{S.hide=false;setPrefHide(false);renderPart()};{const fm=$('#fMk');if(fm)fm.onclick=()=>marksMenu()};$('#fOuv').onclick=ouvir;$('#fOuvS').onclick=()=>stopPlay();{const {ci,ix}=cultoNb(n);const fnx=$('#fNext'),fpv=$('#fPrev');if(fnx)fnx.onclick=()=>goPiece(ci[ix+1]);if(fpv)fpv.onclick=()=>goPiece(ci[ix-1])};return mountPage()}
+ dragify($('#bars'),$('#bGrip'),'jsBarPos');$('#bBack').onclick=closeScore;$('#hideT').onclick=()=>{S.hide=true;setPrefHide(true);renderPart()};{const ml=$('#mkL');if(ml)ml.onclick=()=>marksMenu()};$('#bOuv').onclick=ouvir;$('#bOuvS').onclick=()=>stopPlay();
+ $('#wk').onclick=()=>{WAKE=!WAKE;if(WAKE){WLmsg=false;wake();toast('Tela acesa por 30 min (cada toque renova)')}else{unwake();toast('Tela acesa desligada')}renderPart()};
  p.querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{S.preset=b.dataset.pre||null;renderPart()});
  $('#pP').onclick=goP;$('#pN').onclick=goN;
  $('#zM').onclick=()=>zoomStep(-25);$('#zP').onclick=()=>zoomStep(25);

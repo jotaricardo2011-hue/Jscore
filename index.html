@@ -1,10 +1,24 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Jscore</title><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#2b4a8b"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Jscore</title><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0c0a06"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-:root{--bg:#eef0f3;--panel:#f7f8fa;--card:#fff;--ink:#1c2433;--mute:#667085;--line:#d5d9e0;--accent:#2b4a8b;--accent-ink:#fff;--mark:#c8372d;--hl:#ffe45c;--shadow:0 1px 2px rgba(20,30,50,.08),0 4px 14px rgba(20,30,50,.06)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161d;--panel:#171c25;--card:#1e2430;--ink:#e8ebf1;--mute:#98a2b3;--line:#2c3443;--accent:#7ea2f0;--accent-ink:#0d1320;--mark:#ff6b5e;--shadow:0 1px 2px rgba(0,0,0,.4)}}
-:root[data-theme="dark"]{--bg:#12161d;--panel:#171c25;--card:#1e2430;--ink:#e8ebf1;--mute:#98a2b3;--line:#2c3443;--accent:#7ea2f0;--accent-ink:#0d1320;--mark:#ff6b5e;--shadow:0 1px 2px rgba(0,0,0,.4)}
+:root{--bg:#0c0a06;--panel:#14110b;--card:#1c1810;--ink:#f4e9cc;--mute:#a8956b;--line:#3a3122;--accent:#d4a73f;--accent-ink:#1a1206;--mark:#e06a4e;--hl:#ffe45c;--shadow:0 1px 2px rgba(0,0,0,.5),0 4px 14px rgba(0,0,0,.35);color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c0a06;--panel:#14110b;--card:#1c1810;--ink:#f4e9cc;--mute:#a8956b;--line:#3a3122;--accent:#d4a73f;--accent-ink:#1a1206;--mark:#e06a4e;--hl:#ffe45c;--shadow:0 1px 2px rgba(0,0,0,.5),0 4px 14px rgba(0,0,0,.35)}}
+:root[data-theme="dark"]{--bg:#0c0a06;--panel:#14110b;--card:#1c1810;--ink:#f4e9cc;--mute:#a8956b;--line:#3a3122;--accent:#d4a73f;--accent-ink:#1a1206;--mark:#e06a4e;--hl:#ffe45c;--shadow:0 1px 2px rgba(0,0,0,.5),0 4px 14px rgba(0,0,0,.35)}
+/* tema ouro e preto: brilho dourado suave no fundo, botões principais em ouro */
+body{background:radial-gradient(1100px 620px at 85% -12%,rgba(212,167,63,.13),transparent 62%),radial-gradient(900px 520px at -10% 110%,rgba(212,167,63,.07),transparent 60%),var(--bg);background-attachment:fixed}
+body .btn.pri,body .btn.on,body .chip.on{background:linear-gradient(180deg,#ecc875,#b8892c);border-color:#b8892c;color:#1a1206}
+body .tab.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
+aside,main{background:color-mix(in srgb,var(--panel) 92%,transparent)}
+.fi{display:inline-block;width:20px;height:20px;border-radius:5px;background:url(clave.png) center/cover;vertical-align:-4px;flex:none;margin-right:2px}
+.thumb:has(img.cl){background:linear-gradient(90deg,#5e4520,#997540 38%,#ad8b53 62%,#d8b46a)}
+.thumb img.cl{width:auto;height:100%;object-fit:contain;-webkit-mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent);mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent)}
+/* abertura: sax soltando as notas */
+#splash{position:fixed;inset:0;z-index:200;background:#000;transition:opacity .6s}
+#splash video{width:100%;height:100%;object-fit:cover;object-position:58% 50%;display:block}
+@media (orientation:portrait){#splash video{object-fit:contain}}
+#splash.out{opacity:0;pointer-events:none}
+#spX{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));background:rgba(0,0,0,.45);color:#f4e9cc;border:1px solid rgba(212,167,63,.6);border-radius:999px;padding:10px 18px;font-size:16px}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--ink);font:15px/1.45 "IBM Plex Sans",system-ui,sans-serif;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));overflow-x:hidden}
@@ -12,8 +26,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 h1,h2,h3{font-family:"Instrument Serif",Georgia,serif;font-weight:400;margin:0}
 .app{display:grid;grid-template-columns:272px 1fr;gap:16px;height:100vh;height:100dvh;padding:12px 0}
 aside{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;overflow:auto;display:flex;flex-direction:column;gap:8px}
-.brand{font-family:"Instrument Serif",serif;font-size:26px;padding:4px 6px;display:flex;align-items:center;gap:8px}
-.brand i{width:10px;height:10px;border-radius:50%;background:var(--mark);display:inline-block}
+.brand{font-family:"Instrument Serif",serif;font-size:28px;padding:4px 6px;display:flex;align-items:center;gap:10px;color:#e2b955}
+.brand i{width:34px;height:34px;border-radius:9px;background:url(clave.png) center/cover;display:inline-block;box-shadow:0 0 0 1px rgba(212,167,63,.5)}
 .tree .row{display:flex;align-items:center;gap:4px;padding:6px 8px;border-radius:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tree .row:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .tree .row.on{background:color-mix(in srgb,var(--accent) 18%,transparent);font-weight:500}
@@ -122,6 +136,8 @@ canvas.roll{width:100%;height:150px;background:var(--bg);border:1px solid var(--
 }
 </style>
 </head><body>
+<div id="splash"><video id="spV" src="abertura.mp4" poster="abertura.jpg" muted autoplay playsinline preload="auto"></video><button id="spX">Pular ⏭</button></div>
+<script>(()=>{const sp=document.getElementById('splash'),v=document.getElementById('spV');let done=false;const end=()=>{if(done)return;done=true;sp.classList.add('out');setTimeout(()=>{try{v.pause()}catch(e){}sp.remove()},700)};if(/[?&]share=1/.test(location.search))return end();v.addEventListener('ended',end);v.addEventListener('error',end);sp.addEventListener('click',end);const p=v.play();if(p&&p.catch)p.catch(()=>setTimeout(end,1500));setTimeout(end,11500)})()</script>
 <div class="app">
  <aside id="side">
   <div class="brand" id="brand" role="button" title="Voltar ao início" style="cursor:pointer"><i></i>Jscore</div>
@@ -168,7 +184,7 @@ function modal(html,setup){const m=$('#modal');m.innerHTML='<div class="mask"><d
 function closeModal(){$('#modal').innerHTML=''}
 function ask(title,val,okLabel){return new Promise(res=>{modal(`<h3>${esc(title)}</h3><input type="text" id="mi" value="${esc(val||'')}"><div class="acts"><button class="btn" id="mc">Cancelar</button><button class="btn pri" id="mo">${okLabel||'OK'}</button></div>`,d=>{const i=$('#mi',d);i.focus();i.select();const ok=()=>{const v=i.value.trim();closeModal();res(v||null)};$('#mo',d).onclick=ok;$('#mc',d).onclick=()=>{closeModal();res(null)};i.onkeydown=e=>{if(e.key==='Enter')ok();if(e.key==='Escape'){closeModal();res(null)}}})})}
 function confirmBox(title,text,label){return new Promise(res=>{modal(`<h3>${esc(title)}</h3><p>${esc(text)}</p><div class="acts"><button class="btn" id="mc">Cancelar</button><button class="btn pri" id="mo">${label||'Confirmar'}</button></div>`,d=>{$('#mo',d).onclick=()=>{closeModal();res(true)};$('#mc',d).onclick=()=>{closeModal();res(false)}})})}
-function pickFolder(title,exclude,label){return new Promise(res=>{let sel=ROOT;modal(`<h3>${esc(title)}</h3><div class="pick" id="pk"></div><div class="acts"><button class="btn" id="mc">Cancelar</button><button class="btn pri" id="mo">${label||'Escolher'}</button></div>`,d=>{const pk=$('#pk',d);const draw=()=>{let h=`<div class="row ${sel===ROOT?'on':''}" data-id="">📁 Início (raiz)</div>`;const walk=(pid,dep)=>kids(pid).filter(n=>n.type==='folder'&&!(exclude&&(n.id===exclude||isDesc(n.id,exclude)))).forEach(n=>{h+=`<div class="row ${sel===n.id?'on':''}" data-id="${n.id}" style="padding-left:${8+dep*16}px">📁 ${esc(n.name)}</div>`;walk(n.id,dep+1)});walk(ROOT,1);pk.innerHTML=h;pk.querySelectorAll('.row').forEach(r=>r.onclick=()=>{sel=r.dataset.id||ROOT;draw()})};draw();$('#mo',d).onclick=()=>{closeModal();res({id:sel})};$('#mc',d).onclick=()=>{closeModal();res(null)}})})}
+function pickFolder(title,exclude,label){return new Promise(res=>{let sel=ROOT;modal(`<h3>${esc(title)}</h3><div class="pick" id="pk"></div><div class="acts"><button class="btn" id="mc">Cancelar</button><button class="btn pri" id="mo">${label||'Escolher'}</button></div>`,d=>{const pk=$('#pk',d);const draw=()=>{let h=`<div class="row ${sel===ROOT?'on':''}" data-id=""><i class="fi"></i> Início (raiz)</div>`;const walk=(pid,dep)=>kids(pid).filter(n=>n.type==='folder'&&!(exclude&&(n.id===exclude||isDesc(n.id,exclude)))).forEach(n=>{h+=`<div class="row ${sel===n.id?'on':''}" data-id="${n.id}" style="padding-left:${8+dep*16}px"><i class="fi"></i> ${esc(n.name)}</div>`;walk(n.id,dep+1)});walk(ROOT,1);pk.innerHTML=h;pk.querySelectorAll('.row').forEach(r=>r.onclick=()=>{sel=r.dataset.id||ROOT;draw()})};draw();$('#mo',d).onclick=()=>{closeModal();res({id:sel})};$('#mc',d).onclick=()=>{closeModal();res(null)}})})}
 function menu(items){return new Promise(res=>{modal('<div class="menu">'+items.map((t,i)=>`<button data-i="${i}">${esc(t)}</button>`).join('')+'</div>',d=>{d.querySelectorAll('button').forEach(b=>b.onclick=()=>{closeModal();res(+b.dataset.i)})})})}
 
 /* ===== operações sobre nós ===== */
@@ -198,7 +214,7 @@ const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLo
 function whereIs(n){return path(n.parentId).map(x=>x.name).join(' / ')||'Início'}
 function renderSearch(){const m=$('#main');const q=norm(Q);const res=NODES.filter(n=>(n.type==='score'||n.type==='folder')&&norm(n.name).includes(q)).sort((a,b)=>(a.type===b.type?0:a.type==='folder'?-1:1));
  m.innerHTML=`<div class="top"><button class="btn mb" id="bMenu">☰</button><div class="crumbs"><a>🔎 “${esc(Q)}”</a></div><span class="mono mute">${res.length} resultado(s)</span><button class="btn" id="sClr">✕ Limpar busca</button></div>`+
- (res.length?`<div class="pane">${res.map(n=>`<div class="card" style="flex-direction:row;align-items:center;gap:10px;padding:10px;margin-bottom:8px" data-id="${n.id}"><span style="font-size:22px">${n.type==='folder'?'📁':'🎼'}</span><div style="flex:1;min-width:0"><div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.name)}</div><div class="cs" style="padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(whereIs(n))}</div></div>${n.type==='score'?`<button class="btn ${inCulto(n.id)?'on':''}" data-cul="${n.id}">🎷</button>`:''}</div>`).join('')}</div>`:`<div class="empty"><h2>Nada encontrado</h2><p>Tente outra parte do nome ou só o número.</p></div>`);
+ (res.length?`<div class="pane">${res.map(n=>`<div class="card" style="flex-direction:row;align-items:center;gap:10px;padding:10px;margin-bottom:8px" data-id="${n.id}"><span style="font-size:22px">${n.type==='folder'?'<i class="fi" style="width:26px;height:26px"></i>':'🎼'}</span><div style="flex:1;min-width:0"><div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.name)}</div><div class="cs" style="padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(whereIs(n))}</div></div>${n.type==='score'?`<button class="btn ${inCulto(n.id)?'on':''}" data-cul="${n.id}">🎷</button>`:''}</div>`).join('')}</div>`:`<div class="empty"><h2>Nada encontrado</h2><p>Tente outra parte do nome ou só o número.</p></div>`);
  const bm=$('#bMenu');if(bm)bm.onclick=()=>sideToggle();
  $('#sClr').onclick=()=>{Q='';$('#q').value='';render()};
  m.querySelectorAll('.card').forEach(c=>c.onclick=e=>{if(e.target.closest('button'))return;const n=byId(c.dataset.id);if(n.type==='folder'){Q='';$('#q').value='';cur=n.id;openIds.add(n.id);render()}else openScore(n.id)});
@@ -291,18 +307,18 @@ async function importFiles(files,pid){let last=null;
 
 /* ===== sidebar / listagem ===== */
 function renderTree(){const t=$('#tree');let h=`<div class="row ${cur===ROOT&&!viewing?'on':''}" data-id="" data-drop="1"><span class="tw"></span>🏠 Início</div><div class="row ${cur==='__culto'&&!viewing?'on':''}" data-id="__culto"><span class="tw"></span>🎷 Culto (${(byId('culto')?byId('culto').items.filter(byId).length:0)})</div>`;
- const walk=(pid,dep)=>kids(pid).filter(n=>n.type==='folder').forEach(n=>{const has=kids(n.id).some(k=>k.type==='folder');const op=openIds.has(n.id);h+=`<div class="row ${cur===n.id&&!viewing?'on':''}" data-id="${n.id}" data-drop="1" style="padding-left:${8+dep*14}px"><span class="tw" data-tw="${n.id}">${has?(op?'▾':'▸'):''}</span>📁 ${esc(n.name)}</div>`;if(op)walk(n.id,dep+1)});
+ const walk=(pid,dep)=>kids(pid).filter(n=>n.type==='folder').forEach(n=>{const has=kids(n.id).some(k=>k.type==='folder');const op=openIds.has(n.id);h+=`<div class="row ${cur===n.id&&!viewing?'on':''}" data-id="${n.id}" data-drop="1" style="padding-left:${8+dep*14}px"><span class="tw" data-tw="${n.id}">${has?(op?'▾':'▸'):''}</span><i class="fi"></i> ${esc(n.name)}</div>`;if(op)walk(n.id,dep+1)});
  walk(ROOT,0);t.innerHTML=h;
  t.querySelectorAll('.row').forEach(r=>{r.onclick=e=>{const id=r.dataset.id||ROOT;if(e.target.dataset.tw){openIds.has(id)?openIds.delete(id):openIds.add(id);return renderTree()}if(viewing){stopPlay();flushView()}Q='';$('#q').value='';cur=id;viewing=null;if(id)openIds.add(id);render();sideClose()};if(r.dataset.id!=='__culto')dropTarget(r,r.dataset.id||ROOT)})}
 let dragId=null;
 function dropTarget(el,pid){el.ondragover=e=>{if(dragId){e.preventDefault();el.classList.add('drop')}};el.ondragleave=()=>el.classList.remove('drop');el.ondrop=e=>{e.preventDefault();el.classList.remove('drop');const n=byId(dragId);dragId=null;if(n)moveNode(n,pid)}}
 function render(){renderTree();if(viewing)return;const m=$('#main');m.classList.remove('focus');if(Q)return renderSearch();if(cur==='__culto')return renderCulto();const cs=path(cur);
  let h=`<div class="top"><button class="btn mb" id="bMenu">☰</button><div class="crumbs"><a data-id="">Início</a>${cs.map(c=>`<span class="mute">/</span><a data-id="${c.id}">${esc(c.name)}</a>`).join('')}</div>
- <button class="btn" id="bNF">📁 Nova pasta</button><button class="btn" id="bImp">⬆ Importar</button><button class="btn pri" id="bCam">📷 Foto da partitura</button></div>`;
+ <button class="btn" id="bNF">＋ Nova pasta</button><button class="btn" id="bImp">⬆ Importar</button><button class="btn pri" id="bCam">📷 Foto da partitura</button></div>`;
  const ch=kids(cur).sort((a,b)=>(a.type===b.type?0:a.type==='folder'?-1:1));
  const cul=cur===ROOT?`<div class="card" data-culto="1"><div class="thumb">🎷</div><div class="cn">Culto</div><div class="cs">${byId('culto')?byId('culto').items.filter(byId).length:0} peças</div></div>`:'';
  if(!ch.length)h+=(cul?'<div class="grid">'+cul+'</div>':'')+`<div class="empty"><h2>${cur?'Pasta vazia':'Seu repertório começa aqui'}</h2><p>Tire uma foto de uma partitura, importe PDF, imagem, MusicXML, MIDI ou ABC, ou crie pastas e subpastas para organizar.</p></div>`;
- else h+='<div class="grid">'+cul+ch.map(n=>`<div class="card" draggable="true" data-id="${n.id}"><div class="thumb">${n.type==='folder'?'📁':({image:'',pdf:'📄',musicxml:'🎼',midi:'🎹',abc:'🎼'})[n.kind]===''?'<img alt="">':({pdf:'📄',musicxml:'🎼',midi:'🎹',abc:'🎼'})[n.kind]}</div><div class="cn">${esc(n.name)}</div><div class="cs">${n.type==='folder'?kids(n.id).length+' itens':n.kind}</div><button class="dots" data-m="${n.id}">⋯</button></div>`).join('')+'</div>';
+ else h+='<div class="grid">'+cul+ch.map(n=>`<div class="card" draggable="true" data-id="${n.id}"><div class="thumb">${n.type==='folder'?'<img class="cl" src="clave.png" alt="">':({image:'',pdf:'📄',musicxml:'🎼',midi:'🎹',abc:'🎼'})[n.kind]===''?'<img alt="">':({pdf:'📄',musicxml:'🎼',midi:'🎹',abc:'🎼'})[n.kind]}</div><div class="cn">${esc(n.name)}</div><div class="cs">${n.type==='folder'?kids(n.id).length+' itens':n.kind}</div><button class="dots" data-m="${n.id}">⋯</button></div>`).join('')+'</div>';
  m.innerHTML=h;
  m.querySelectorAll('.crumbs a').forEach(a=>a.onclick=()=>{cur=a.dataset.id||ROOT;render()});
  $('#bNF').onclick=()=>mkFolder(cur);$('#bImp').onclick=()=>$('#fImport').click();$('#bCam').onclick=()=>$('#fCam').click();const bm=$('#bMenu');if(bm)bm.onclick=()=>sideToggle();
@@ -329,7 +345,7 @@ async function openScore(id){if(!viewing&&WIDE()&&!$('.app').classList.contains(
 function closeScore(){stopPlay&&stopPlay();clearTimeout(saveT);dbPut(S.n);sideRestore();viewing=null;S=null;document.documentElement.style.setProperty('--barH','0px');reload().then(render)}
 function renderViewer(){const n=S.n,m=$('#main');m.classList.remove('focus');document.documentElement.style.setProperty('--barH','0px');
  m.innerHTML=`<div class="top"><button class="btn mb" id="bMenu">☰</button><button class="btn" id="vHome" title="Início">🏠</button><button class="btn" id="vBack">← Voltar</button><div class="crumbs"><a id="vName" title="Renomear">${esc(n.name)}</a></div>${(()=>{const {ci,ix}=cultoNb(n);return `<button class="btn ${ix>=0?'on':''}" id="vCul">${ix>=0?'🎷 No Culto':'＋ Culto'}</button>`+(ix>=0&&ci.length>1?`<button class="btn" id="vPrev" ${ix>0?'':'disabled'}>⏮</button><button class="btn" id="vNext" ${ix<ci.length-1?'':'disabled'}>Próxima ⏭</button>`:'')})()}<button class="btn" id="vMet" title="Metrônomo">🥁</button><button class="btn" id="vTun" title="Afinador">🎯</button><button class="btn" id="vFs" title="Tela cheia">⛶</button><button class="btn" id="vMore">⋯</button></div>
- <div class="tabs">${hasPages(n)?`<button class="tab ${S.tab==='part'?'on':''}" data-t="part">Partitura</button>`:''}<button class="tab ${S.tab==='som'?'on':''}" data-t="som">Som</button><button class="tab ${S.tab==='vi'?'on':''}" data-t="vi">🎸 Violão</button><button class="tab ${S.tab==='nt'?'on':''}" data-t="nt">Notas</button></div><div class="pane" id="pane"></div>`;
+ <div class="tabs">${hasPages(n)?`<button class="tab ${S.tab==='part'?'on':''}" data-t="part">Partitura</button>`:''}<button class="tab ${S.tab==='som'?'on':''}" data-t="som">Som</button><button class="tab ${S.tab==='nt'?'on':''}" data-t="nt">Notas</button></div><div class="pane" id="pane"></div>`;
  $('#bMenu').onclick=()=>sideToggle();
  $('#vFs').onclick=fsToggle;$('#vBack').onclick=closeScore;$('#vHome').onclick=goHome;$('#vMet').onclick=()=>togglePanel('met');$('#vTun').onclick=()=>togglePanel('tun');
  $('#vCul').onclick=async()=>{await toggleCulto(n.id);renderViewer()};
@@ -580,7 +596,7 @@ function paperCursor(){if(!CUR.nt.length||!CUR.nt[0].el[0].isConnected)return;  
  if(i>=0&&P.playing&&CUR.nt[i].line!==CUR.line){CUR.line=CUR.nt[i].line;const e=CUR.on[0],r=e&&e.getBoundingClientRect();if(r&&(r.top<90||r.bottom>innerHeight-90))e.scrollIntoView({block:'center',behavior:'smooth'})}}
 function loopUI(){cancelAnimationFrame(P.raf);const f=()=>{updTime();drawRoll();if(P.playing)P.raf=requestAnimationFrame(f)};f()}
 function drawRoll(){const c=$('#roll');if(!c)return;const w=c.clientWidth*devicePixelRatio,h=c.clientHeight*devicePixelRatio;if(c.width!==w||c.height!==h){c.width=w;c.height=h}const x=c.getContext('2d');x.clearRect(0,0,w,h);if(!P.ev.length)return;
- let lo=127,hi=0;P.ev.forEach(e=>{lo=Math.min(lo,e.m);hi=Math.max(hi,e.m)});lo-=2;hi+=2;const rh=h/(hi-lo+1);const st=getComputedStyle(document.body);x.fillStyle=st.getPropertyValue('--accent').trim()||'#2b4a8b';
+ let lo=127,hi=0;P.ev.forEach(e=>{lo=Math.min(lo,e.m);hi=Math.max(hi,e.m)});lo-=2;hi+=2;const rh=h/(hi-lo+1);const st=getComputedStyle(document.body);x.fillStyle=st.getPropertyValue('--accent').trim()||'#d4a73f';
  P.ev.forEach(e=>{x.globalAlpha=.55+.4*e.v;x.fillRect(e.t/P.end*w,(hi-e.m)*rh,Math.max(2,e.d/P.end*w),Math.max(2,rh-1))});x.globalAlpha=1;
  x.fillStyle=st.getPropertyValue('--mark').trim()||'#c33';x.fillRect(posNow()/P.end*w,0,2*devicePixelRatio,h)}
 

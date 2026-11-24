@@ -1,5 +1,5 @@
-const V="jscore-shell-v14",L="jscore-libs";
-const SHELL=["./","index.html","manifest.webmanifest","icon-192.png","icon-512.png"];
+const V="jscore-shell-v15",L="jscore-libs";
+const SHELL=["./","index.html","manifest.webmanifest","icon-192.png","icon-512.png","clave.png","abertura.mp4","abertura.jpg"];
 /* bibliotecas externas baixadas já na instalação, para PDF, ABC e fontes funcionarem sem internet */
 const LIBS=["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js","https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js","https://cdnjs.cloudflare.com/ajax/libs/abcjs/6.4.4/abcjs-basic-min.js"];
 const FONTCSS="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap";
@@ -19,5 +19,5 @@ self.addEventListener("fetch",e=>{
  if(/cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com/.test(u.host)){
   e.respondWith(caches.open(L).then(c=>c.match(r).then(h=>h||fetch(r).then(res=>{if(res&&(res.ok||res.type==="opaque"))c.put(r,res.clone());return res}))));return}
  if(u.origin===location.origin){
-  e.respondWith(fetch(r).then(res=>{const cp=res.clone();caches.open(V).then(c=>c.put(r,cp));return res}).catch(()=>caches.match(r,{ignoreSearch:true}).then(h=>h||caches.match("index.html"))));}
+  e.respondWith(fetch(r).then(res=>{if(res.status===200){const cp=res.clone();caches.open(V).then(c=>c.put(r,cp)).catch(()=>{})}return res}).catch(()=>caches.match(r,{ignoreSearch:true}).then(h=>h||caches.match("index.html"))));}
 });
